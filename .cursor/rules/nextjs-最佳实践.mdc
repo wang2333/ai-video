@@ -1,0 +1,223 @@
+---
+globs: '*.ts,*.tsx'
+description: 'Next.js 15 App Router 最佳实践指导'
+---
+
+# Next.js 15 最佳实践
+
+## App Router 架构
+
+### 页面与布局结构
+
+```typescript
+// app/layout.tsx - 根布局（必须）
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang='zh-CN'>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
+    </html>
+  );
+}
+
+// app/video/layout.tsx - 嵌套布局
+export default function VideoLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className='video-container'>
+      <nav>{/* 视频导航 */}</nav>
+      <main>{children}</main>
+    </div>
+  );
+}
+```
+
+### 服务端组件 vs 客户端组件
+
+#### 优先使用服务端组件
+
+```typescript
+// ✅ 服务端组件（默认）
+// app/video/page.tsx
+import { VideoList } from '@/components/video/VideoList';
+
+export default async function VideoPage() {
+  // 服务端数据获取
+  const videos = await fetchVideos();
+
+  return (
+    <div>
+      <h1>AI 视频处理</h1>
+      <VideoList videos={videos} />
+    </div>
+  );
+}
+```
+
+#### 必要时使用客户端组件
+
+```typescript
+// ✅ 客户端组件（交互逻辑）
+'use client';
+
+import { useState } from 'react';
+
+export const VideoUploader = () => {
+  const [file, setFile] = useState<File | null>(null);
+  const [progress, setProgress] = useState(0);
+
+  const handleUpload = async () => {
+    // 文件上传逻辑
+  };
+
+  return (
+    <div>
+      <input type='file' accept='video/*' onChange={e => setFile(e.target.files?.[0] || null)} />
+      <button onClick={handleUpload}>上传视频</button>
+    </div>
+  );
+};
+```
+
+## 图片与静态资源优化
+
+### Image 组件使用
+
+```typescript
+import Image from 'next/image';
+
+// ✅ 优化的图片使用
+const VideoThumbnail = ({ src, alt }: { src: string; alt: string }) => {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      width={320}
+      height={180}
+      priority={false} // 首屏外的图片
+      placeholder='blur'
+      blurDataURL='data:image/jpeg;base64,...'
+      className='rounded-lg object-cover'
+    />
+  );
+};
+```
+
+### 字体优化
+
+```typescript
+import { Geist, Geist_Mono } from 'next/font/google';
+
+const geistSans = Geist({
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
+  display: 'swap' // 字体交换策略
+});
+
+const geistMono = Geist_Mono({
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
+  display: 'swap'
+});
+```
+
+## 数据获取模式
+
+### Server Actions（推荐）
+
+```typescript
+// lib/actions/video-actions.ts
+'use server';
+
+import { revalidatePath } from 'next/cache';
+
+export async function processVideo(formData: FormData) {
+  try {
+    const file = formData.get('video') as File;
+
+    // AI 视频处理逻辑
+    const result = await aiProcessor.processVideo(file);
+
+    // 重新验证相关页面
+    revalidatePath('/video');
+
+    return { success: true, data: result };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+```
+
+### API Routes（当需要时）
+
+```typescript
+// app/api/video/upload/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get('video') as File;
+
+    // 处理上传逻辑
+    const result = await uploadVideoToStorage(file);
+
+    return NextResponse.json({ success: true, data: result });
+  } catch (error) {
+    return NextResponse.json({ success: false, error: '上传失败' }, { status: 500 });
+  }
+}
+```
+
+## 元数据与 SEO
+
+### 动态元数据
+
+```typescript
+// app/video/[id]/page.tsx
+import type { Metadata } from 'next';
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const video = await fetchVideo(params.id);
+
+  return {
+    title: `${video.title} - AI 视频处理`,
+    description: video.description,
+    openGraph: {
+      title: video.title,
+      description: video.description,
+      images: [video.thumbnail]
+    }
+  };
+}
+```
+
+## 性能优化指导
+
+### 代码分割
+
+```typescript
+// ✅ 动态导入大型组件
+import dynamic from 'next/dynamic';
+
+const VideoEditor = dynamic(() => import('@/components/video/VideoEditor'), {
+  loading: () => <div>加载视频编辑器中...</div>,
+  ssr: false // 纯客户端组件
+});
+```
+
+### 缓存策略
+
+```typescript
+// ✅ 使用 Next.js 缓存
+export const revalidate = 3600; // 1小时重新验证
+
+// ✅ 缓存 API 调用
+const videos = await fetch('/api/videos', {
+  next: { revalidate: 300 } // 5分钟缓存
+});
+```
+
+## Turbopack 特定优化
+
+- 利用 Turbopack 的快速刷新特性
+- 避免在开发模式使用过多的动态导入
+- 充分利用 Turbopack 的增量编译能力
