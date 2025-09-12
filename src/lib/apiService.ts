@@ -268,10 +268,14 @@ class ApiService {
     const data = {
       url: params.url,
       model: params.model,
-      imageUrl: params.imageUrl,
-      prompt: params.prompt,
-      outputCount: params.outputCount,
-      size: params.sieze
+      input: {
+        function: 'description_edit',
+        prompt: params.prompt,
+        base_image_url: params.imageUrl
+      },
+      parameters: {
+        n: params.outputCount
+      }
     };
 
     // 发送请求到专门的图生图API路由

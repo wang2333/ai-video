@@ -18,25 +18,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'API密钥未配置' }, { status: 500 });
     }
 
-    const { url, model, ...rest } = params;
-
-    // 根据模型构建请求数据
-    let requestBody = {};
-
-    if (model === 'wanx2.1-imageedit') {
-      // 通义万相图像编辑模型
-      requestBody = {
-        model: model,
-        input: {
-          function: 'stylization_all',
-          prompt: rest.prompt, // 编辑指令
-          base_image_url: rest.imageUrl // 参考图片URL
-        },
-        parameters: {
-          n: rest.outputCount
-        }
-      };
-    }
+    const { url, ...rest } = params;
 
     // 第一步：创建异步任务
     const response = await fetch(url, {
@@ -46,7 +28,7 @@ export async function POST(request: NextRequest) {
         Authorization: `Bearer ${apiKey}`,
         'X-DashScope-Async': 'enable' // 启用异步处理
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify(rest)
     });
 
     if (!response.ok) {

@@ -51,7 +51,6 @@ export default function ImageToImage() {
    * 处理图片上传
    */
   const handleImageUpload = (image: UploadedImage) => {
-    console.log('?? ~ image:', image);
     setUploadedImage(image);
     setError(null);
   };
