@@ -382,8 +382,8 @@ enum TaskStatus {
 export const pollTaskStatus = async (
   taskId: string,
   apiKey: string,
-  maxAttempts = 60,
-  interval = 3000
+  maxAttempts = 100,
+  interval = 5000
 ) => {
   const taskUrl = `https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`;
 
