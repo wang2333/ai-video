@@ -12,7 +12,7 @@ import {
 export interface SelectOption {
   value: string;
   label: string;
-  [key: string]: any; // 允许额外的属性
+  [key: string]: any;
 }
 
 export interface SelectMolProps {

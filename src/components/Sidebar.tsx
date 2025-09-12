@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Type, ImageIcon, Camera, Brain, Settings, Lightbulb } from 'lucide-react';
+import { Type, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Sidebar() {

@@ -4,10 +4,8 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogHeader,
-  DialogOverlay,
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';

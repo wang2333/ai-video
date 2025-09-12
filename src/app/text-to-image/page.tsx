@@ -12,8 +12,8 @@ import { Button } from '@/components/ui/button';
 import { ImageCarouselMol } from '@/components/mol/imageCarouselMol';
 import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { DialogMol } from '@/components/mol/dialogMol';
-import { downloadCurrentImage, downloadImages } from '@/lib/downloadUtils';
-import { generateImage, GeneratedImage, GenerateImageParams } from '@/lib/apiService';
+import { downloadCurrentImage } from '@/lib/downloadUtils';
+import { generateImage, GeneratedImage } from '@/lib/apiService';
 
 const SIZE_MAP: Record<string, string> = {
   '1:1': '1328*1328', // 正方形

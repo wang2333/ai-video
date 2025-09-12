@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     console.log('?? ~ params:', JSON.stringify(params));
 
     // 调用第三方API
-    const response = await fetch(params.url, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
