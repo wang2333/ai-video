@@ -4,7 +4,127 @@
  */
 
 /**
- * 下载图片到本地
+ * 直接使用a标签下载图片（不使用fetch）
+ * @param imageUrl - 图片URL
+ * @param fileName - 文件名（可选）
+ * @returns Promise<void>
+ */
+export const downloadImageDirect = async (imageUrl: string, fileName?: string): Promise<void> => {
+  try {
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+    const finalFileName = fileName || `ai-image-${timestamp}.jpg`;
+
+    // 方法1: 直接创建a标签下载
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = finalFileName;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+
+    // 添加到DOM并触发点击
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    console.log('尝试直接下载:', imageUrl);
+  } catch (error) {
+    console.error('直接下载失败:', error);
+    throw error;
+  }
+};
+
+/**
+ * 使用iframe触发下载
+ * @param imageUrl - 图片URL
+ * @returns Promise<void>
+ */
+export const downloadImageViaIframe = async (imageUrl: string): Promise<void> => {
+  try {
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = imageUrl;
+
+    document.body.appendChild(iframe);
+
+    // 延迟移除iframe
+    setTimeout(() => {
+      if (document.body.contains(iframe)) {
+        document.body.removeChild(iframe);
+      }
+    }, 2000);
+
+    console.log('尝试iframe下载:', imageUrl);
+  } catch (error) {
+    console.error('iframe下载失败:', error);
+    throw error;
+  }
+};
+
+/**
+ * 在新窗口打开图片（作为下载的fallback）
+ * @param imageUrl - 图片URL
+ * @returns Promise<void>
+ */
+export const openImageInNewWindow = async (imageUrl: string): Promise<void> => {
+  try {
+    const newWindow = window.open(imageUrl, '_blank', 'noopener,noreferrer');
+    if (!newWindow) {
+      throw new Error('弹窗被阻止，请允许弹窗后重试');
+    }
+    console.log('在新窗口打开图片:', imageUrl);
+  } catch (error) {
+    console.error('新窗口打开失败:', error);
+    throw error;
+  }
+};
+
+/**
+ * 智能下载图片 - 尝试多种方法
+ * @param imageUrl - 图片URL
+ * @param fileName - 文件名（可选）
+ * @returns Promise<void>
+ */
+export const downloadImageSmart = async (imageUrl: string, fileName?: string): Promise<void> => {
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+  const finalFileName = fileName || `ai-image-${timestamp}.jpg`;
+
+  try {
+    // 方法1: 尝试直接下载
+    console.log('尝试方法1: 直接下载');
+    await downloadImageDirect(imageUrl, finalFileName);
+
+    // 等待一下看是否成功
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return;
+  } catch (error) {
+    console.warn('方法1失败:', error);
+  }
+
+  try {
+    // 方法2: 尝试iframe下载
+    console.log('尝试方法2: iframe下载');
+    await downloadImageViaIframe(imageUrl);
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return;
+  } catch (error) {
+    console.warn('方法2失败:', error);
+  }
+
+  try {
+    // 方法3: 在新窗口打开（用户可以右键保存）
+    console.log('尝试方法3: 新窗口打开');
+    await openImageInNewWindow(imageUrl);
+    return;
+  } catch (error) {
+    console.warn('方法3失败:', error);
+  }
+
+  throw new Error('所有下载方法都失败了，请手动复制链接下载');
+};
+
+/**
+ * 原有的fetch下载方法（保留作为备选）
  * @param imageUrl - 图片URL
  * @param fileName - 文件名（可选）
  * @returns Promise<void>

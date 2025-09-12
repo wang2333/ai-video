@@ -1,19 +1,7 @@
 import Link from 'next/link';
 import Header from '@/components/Header';
-import {
-  Type,
-  ImageIcon,
-  Sparkles,
-  Wand2,
-  ArrowRight,
-  Star,
-  Video,
-  Play,
-  Zap,
-  Palette,
-  Film,
-  Camera
-} from 'lucide-react';
+import { Type, ImageIcon, Sparkles, Wand2, ArrowRight, Star, Video, Film } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Home() {
   return (
@@ -244,7 +232,12 @@ export default function Home() {
                   key={index}
                   className='aspect-square bg-[#24222D] border border-[#4a4a54] rounded-2xl overflow-hidden hover:scale-105 transition-transform cursor-pointer hover:border-[#FF3466]/50 relative group'
                 >
-                  <img src={item.src} alt={item.alt} className='w-full h-full object-cover' />
+                  <Image
+                    src={item.src}
+                    alt={item.alt}
+                    fill
+                    className='w-full h-full object-cover'
+                  />
                   <div className='absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity' />
                 </div>
               ))}

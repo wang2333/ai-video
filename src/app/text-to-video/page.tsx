@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
-import { Sparkles, Info, RefreshCw, AlertCircle, Download, Play, Pause } from 'lucide-react';
+import { Sparkles, Info, RefreshCw, AlertCircle, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -121,13 +121,25 @@ export default function TextToVideoPage() {
     setExamples(getRandomExamples(4));
   }, []);
 
+  // 根据当前选择的模型获取可用的画质选项
+  const getAvailableQualityLevels = useCallback(() => {
+    const selectedModelData = models.find(m => m.value === selectedModel);
+    return selectedModelData?.qualityLevels || Object.keys(VIDEO_RESOLUTIONS);
+  }, [selectedModel]);
+
+  // 根据当前画质获取可用的长宽比选项
+  const getAvailableAspectRatios = useCallback(() => {
+    const resolutions = VIDEO_RESOLUTIONS[qualityLevel as keyof typeof VIDEO_RESOLUTIONS] || [];
+    return resolutions.map(r => r.ratio);
+  }, [qualityLevel]);
+
   // 当模型改变时，重置画质和长宽比为该模型的第一个可用选项
   useEffect(() => {
     const availableQualities = getAvailableQualityLevels();
     if (availableQualities.length > 0 && !availableQualities.includes(qualityLevel)) {
       setQualityLevel(availableQualities[0]);
     }
-  }, [selectedModel, qualityLevel]);
+  }, [selectedModel, qualityLevel, getAvailableQualityLevels]);
 
   // 当画质档位改变时，重置长宽比为该档位的第一个可用选项
   useEffect(() => {
@@ -135,7 +147,7 @@ export default function TextToVideoPage() {
     if (availableRatios.length > 0 && !availableRatios.includes(aspectRatio)) {
       setAspectRatio(availableRatios[0]);
     }
-  }, [qualityLevel, aspectRatio]);
+  }, [qualityLevel, aspectRatio, getAvailableAspectRatios]);
 
   const refreshExamples = () => {
     setExamples(getRandomExamples(4));
@@ -146,18 +158,6 @@ export default function TextToVideoPage() {
     const resolutions = VIDEO_RESOLUTIONS[qualityLevel as keyof typeof VIDEO_RESOLUTIONS] || [];
     const resolution = resolutions.find(r => r.ratio === aspectRatio);
     return resolution?.value || resolutions[0]?.value || '1280*720';
-  };
-
-  // 根据当前选择的模型获取可用的画质选项
-  const getAvailableQualityLevels = () => {
-    const selectedModelData = models.find(m => m.value === selectedModel);
-    return selectedModelData?.qualityLevels || Object.keys(VIDEO_RESOLUTIONS);
-  };
-
-  // 根据当前画质获取可用的长宽比选项
-  const getAvailableAspectRatios = () => {
-    const resolutions = VIDEO_RESOLUTIONS[qualityLevel as keyof typeof VIDEO_RESOLUTIONS] || [];
-    return resolutions.map(r => r.ratio);
   };
 
   const outputCounts = [1, 2, 3, 4];

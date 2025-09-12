@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import { Sparkles, Info, AlertCircle, Download } from 'lucide-react';
@@ -95,19 +95,19 @@ export default function ImageToVideoPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
 
+  // 根据当前选择的模型获取可用的画质选项
+  const getAvailableQualityLevels = useCallback(() => {
+    const selectedModelData = models.find(m => m.value === selectedModel);
+    return selectedModelData?.qualityLevels || Object.keys(VIDEO_RESOLUTIONS);
+  }, [selectedModel]);
+
   // 当模型改变时，重置画质和长宽比为该模型的第一个可用选项
   useEffect(() => {
     const availableQualities = getAvailableQualityLevels();
     if (availableQualities.length > 0 && !availableQualities.includes(qualityLevel)) {
       setQualityLevel(availableQualities[0]);
     }
-  }, [selectedModel, qualityLevel]);
-
-  // 根据当前选择的模型获取可用的画质选项
-  const getAvailableQualityLevels = () => {
-    const selectedModelData = models.find(m => m.value === selectedModel);
-    return selectedModelData?.qualityLevels || Object.keys(VIDEO_RESOLUTIONS);
-  };
+  }, [selectedModel, qualityLevel, getAvailableQualityLevels]);
 
   const availableQualityLevels = getAvailableQualityLevels();
 

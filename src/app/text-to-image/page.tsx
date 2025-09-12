@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ImageCarouselMol } from '@/components/mol/imageCarouselMol';
 import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { DialogMol } from '@/components/mol/dialogMol';
-import { downloadCurrentImage } from '@/lib/downloadUtils';
+import { downloadImageSmart } from '@/lib/downloadUtils';
 import { generateImage, GeneratedImage } from '@/lib/apiService';
 
 const SIZE_MAP: Record<string, string> = {
@@ -149,7 +149,6 @@ export default function TextToImagePage() {
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>(sampleImages);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     setExamples(getExamples(4));
@@ -176,19 +175,20 @@ export default function TextToImagePage() {
   const selectedStyleOption = styles.find(style => style.label === selectedStyle);
 
   /**
-   * 下载当前显示的图片
+   * 下载当前显示的图片 - 使用智能下载方法
    */
   const handleDownloadCurrent = async () => {
     if (generatedImages.length === 0) return;
 
+    const currentImage = generatedImages[currentImageIndex];
+    if (!currentImage) return;
+
     try {
-      setIsDownloading(true);
-      await downloadCurrentImage(generatedImages, currentImageIndex);
+      setError(null); // 清除之前的错误
+      await downloadImageSmart(currentImage.src, `ai-image-${currentImage.id}-${Date.now()}.jpg`);
     } catch (error) {
-      console.error('下载失败:', error);
-      setError('下载失败，请重试');
-    } finally {
-      setIsDownloading(false);
+      const errorMessage = error instanceof Error ? error.message : '下载失败';
+      setError(`下载失败: ${errorMessage}`);
     }
   };
 

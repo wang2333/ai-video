@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
-import { Sparkles, Info, RefreshCw, AlertCircle, Download } from 'lucide-react';
+import { Sparkles, Info, AlertCircle, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { ImageCarouselMol } from '@/components/mol/imageCarouselMol';
 import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { ImageUploadMol, UploadedImage } from '@/components/mol/imageUploadMol';
-import { downloadCurrentImage } from '@/lib/downloadUtils';
+import { downloadImageSmart } from '@/lib/downloadUtils';
 import { generateImageToImage, GeneratedImage } from '@/lib/apiService';
 
 // Model data - 图生图支持的模型
@@ -43,11 +43,9 @@ export default function ImageToImage() {
   // 图生图特有状态
   const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatingStatus, setGeneratingStatus] = useState<string>('');
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>(sampleImages);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   /**
    * 处理图片上传
@@ -72,14 +70,15 @@ export default function ImageToImage() {
   const handleDownloadCurrent = async () => {
     if (generatedImages.length === 0) return;
 
+    const currentImage = generatedImages[currentImageIndex];
+    if (!currentImage) return;
+
     try {
-      setIsDownloading(true);
-      await downloadCurrentImage(generatedImages, currentImageIndex);
+      setError(null); // 清除之前的错误
+      await downloadImageSmart(currentImage.src, `ai-image-${currentImage.id}-${Date.now()}.jpg`);
     } catch (error) {
       console.error('下载失败:', error);
       setError('下载失败，请重试');
-    } finally {
-      setIsDownloading(false);
     }
   };
 
@@ -138,7 +137,6 @@ export default function ImageToImage() {
 
     setIsGenerating(true);
     setError(null);
-    setGeneratingStatus('创建任务中...');
 
     try {
       const result = await generateImageToImage({
@@ -147,24 +145,18 @@ export default function ImageToImage() {
         prompt: prompt.trim(),
         imageUrl: uploadedImage.base64,
         sieze: '1024*1024', // 默认尺寸
-        outputCount: outputCount,
-        onProgress: (status: string) => {
-          setGeneratingStatus(status);
-        }
+        outputCount: outputCount
       });
 
       if (result.success && result.data) {
         setGeneratedImages(result.data);
         setCurrentImageIndex(0); // 重置到第一张图片
-        setGeneratingStatus('');
       } else {
         setError(result.error || '生成图像失败');
-        setGeneratingStatus('');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '生成图像时发生未知错误';
       setError(errorMessage);
-      setGeneratingStatus('');
     } finally {
       setIsGenerating(false);
     }

@@ -32,7 +32,6 @@ export function VideoPlayerMol({
   const [isMuted, setIsMuted] = useState(true); // 默认静音以提高自动播放成功率
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -188,10 +187,8 @@ export function VideoPlayerMol({
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       videoRef.current?.requestFullscreen().catch(console.error);
-      setIsFullscreen(true);
     } else {
       document.exitFullscreen().catch(console.error);
-      setIsFullscreen(false);
     }
   };
 
