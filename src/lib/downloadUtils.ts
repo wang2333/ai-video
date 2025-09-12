@@ -1,6 +1,6 @@
 /**
- * 图片下载工具类
- * 提供通用的图片下载功能
+ * 媒体文件下载工具类
+ * 提供通用的图片和视频下载功能
  */
 
 /**
@@ -76,5 +76,75 @@ export const downloadCurrentImage = async (
   if (currentIndex >= 0 && currentIndex < images.length) {
     const currentImage = images[currentIndex];
     await downloadImage(currentImage.src, `ai-image-${currentImage.id}-${Date.now()}.jpg`);
+  }
+};
+
+/**
+ * 下载视频到本地
+ * @param videoUrl - 视频URL
+ * @param fileName - 文件名（可选）
+ * @returns Promise<void>
+ */
+export const downloadVideo = async (videoUrl: string, fileName?: string): Promise<void> => {
+  try {
+    // 创建下载链接
+    const link = document.createElement('a');
+    link.href = videoUrl;
+
+    // 设置文件名
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+    link.download = fileName || `ai-video-${timestamp}.mp4`;
+    link.target = '_blank';
+
+    // 触发下载
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('下载视频失败:', error);
+    throw error;
+  }
+};
+
+/**
+ * 批量下载视频
+ * @param videos - 视频数组 {id: number, src: string}[]
+ * @param onProgress - 进度回调函数 (current: number, total: number) => void
+ */
+export const downloadVideos = async (
+  videos: Array<{ id: number; src: string }>,
+  onProgress?: (current: number, total: number) => void
+): Promise<void> => {
+  const total = videos.length;
+
+  for (let i = 0; i < total; i++) {
+    const video = videos[i];
+    try {
+      await downloadVideo(video.src, `ai-video-${video.id}-${Date.now()}.mp4`);
+      onProgress?.(i + 1, total);
+
+      // 添加延迟避免浏览器阻止多个下载
+      if (i < total - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    } catch (error) {
+      console.error(`下载视频 ${video.id} 失败:`, error);
+      // 继续下载下一个视频
+    }
+  }
+};
+
+/**
+ * 获取当前显示视频的下载函数
+ * @param videos - 视频数组
+ * @param currentIndex - 当前显示的视频索引
+ */
+export const downloadCurrentVideo = async (
+  videos: Array<{ id: number; src: string }>,
+  currentIndex: number
+): Promise<void> => {
+  if (currentIndex >= 0 && currentIndex < videos.length) {
+    const currentVideo = videos[currentIndex];
+    await downloadVideo(currentVideo.src, `ai-video-${currentVideo.id}-${Date.now()}.mp4`);
   }
 };

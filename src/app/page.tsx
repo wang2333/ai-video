@@ -1,13 +1,12 @@
 import Link from 'next/link';
 import Header from '@/components/Header';
-import Sidebar from '@/components/Sidebar';
 import { Type, ImageIcon, Sparkles, Wand2, ArrowRight, Star } from 'lucide-react';
 
 export default function Home() {
   return (
     <div className='bg-[#0D0D12] min-h-screen text-white'>
       <Header />
-      <main className='ml-25 pt-14'>
+      <main className='ml-20 pt-14'>
         {/* Hero Section */}
         <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           <div className='text-center py-20'>

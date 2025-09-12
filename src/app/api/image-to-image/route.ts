@@ -1,85 +1,8 @@
+import { pollTaskStatus } from '@/lib/apiService';
 import { NextRequest, NextResponse } from 'next/server';
 
 // 配置 Edge Runtime 以支持 Cloudflare Pages
 export const runtime = 'edge';
-
-/**
- * 异步任务状态枚举
- */
-enum TaskStatus {
-  PENDING = 'PENDING',
-  RUNNING = 'RUNNING',
-  SUCCEEDED = 'SUCCEEDED',
-  FAILED = 'FAILED'
-}
-
-/**
- * 轮询任务状态直到完成
- */
-async function pollTaskStatus(taskId: string, apiKey: string, maxAttempts = 60, interval = 2000) {
-  const taskUrl = `https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`;
-
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    try {
-      const response = await fetch(taskUrl, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${apiKey}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`查询任务状态失败: ${response.status}`);
-      }
-
-      const taskData = await response.json();
-      console.log(`任务状态查询 ${attempt + 1}/${maxAttempts}:`, taskData);
-
-      const status = taskData.output.task_status;
-
-      if (status === TaskStatus.SUCCEEDED) {
-        return { success: true, data: taskData };
-      }
-
-      if (status === TaskStatus.FAILED) {
-        return {
-          success: false,
-          error: taskData.task_metrics?.error_message || '任务执行失败'
-        };
-      }
-
-      // 如果任务还在运行中，等待后继续轮询
-      if (status === TaskStatus.PENDING || status === TaskStatus.RUNNING) {
-        await new Promise(resolve => setTimeout(resolve, interval));
-        continue;
-      }
-
-      // 未知状态
-      return {
-        success: false,
-        error: `未知任务状态: ${status}`
-      };
-    } catch (error) {
-      console.error(`任务状态查询失败 (尝试 ${attempt + 1}):`, error);
-
-      // 如果不是最后一次尝试，继续重试
-      if (attempt < maxAttempts - 1) {
-        await new Promise(resolve => setTimeout(resolve, interval));
-        continue;
-      }
-
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : '任务状态查询失败'
-      };
-    }
-  }
-
-  return {
-    success: false,
-    error: '任务执行超时，请稍后重试'
-  };
-}
 
 /**
  * 图生图API路由
@@ -128,17 +51,10 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('创建异步任务失败:', errorText);
-
-      let errorMessage = `创建任务失败: ${response.status}`;
-      try {
-        const errorData = JSON.parse(errorText);
-        errorMessage = errorData.message || errorData.code || errorMessage;
-      } catch {
-        errorMessage += ` ${response.statusText}`;
-      }
-
-      throw new Error(errorMessage);
+      console.error('第三方API调用失败:', errorText);
+      throw new Error(
+        `API调用失败: ${response.status} ${JSON.parse(errorText)?.code || response.statusText}`
+      );
     }
 
     const taskResponse = await response.json();
@@ -159,7 +75,7 @@ export async function POST(request: NextRequest) {
       throw new Error(pollResult.error);
     }
 
-    console.log('任务执行完成:', JSON.stringify(pollResult.data, null, 2));
+    console.log('任务执行完成:', JSON.stringify(pollResult.data));
 
     return NextResponse.json(pollResult.data);
   } catch (error) {

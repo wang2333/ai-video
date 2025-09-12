@@ -67,6 +67,53 @@ export interface WanxImageEditResponse {
   };
 }
 /**
+ * 生成的视频数据
+ */
+export interface GeneratedVideo {
+  id: number;
+  src: string;
+  taskId?: string;
+}
+
+/**
+ * 视频生成参数
+ */
+export interface GenerateVideoParams {
+  url: string;
+  model: string;
+  prompt: string;
+  resolution: string;
+  outputCount: number;
+  duration?: number;
+}
+
+/**
+ * 视频生成API响应
+ */
+export interface VideoGenerationResponse {
+  output: {
+    video_url: string;
+    task_id: string;
+  };
+}
+
+/**
+ * 视频任务查询响应
+ */
+export interface VideoTaskResponse {
+  task_id: string;
+  task_status: 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+  output?: {
+    results: Array<{
+      url: string;
+    }>;
+  };
+  task_metrics?: {
+    error_message?: string;
+  };
+}
+
+/**
  * 统一的API响应结果
  */
 export interface ServiceResult<T = any> {
@@ -233,9 +280,135 @@ class ApiService {
       data: images
     };
   }
+
+  /**
+   * 生成视频API调用
+   * @param params 生成参数
+   * @returns Promise<ServiceResult<VideoGenerationResponse>>
+   */
+  async generateVideo(
+    params: GenerateVideoParams
+  ): Promise<ServiceResult<VideoGenerationResponse>> {
+    const data = {
+      url: params.url,
+      model: params.model,
+      input: {
+        prompt: params.prompt
+      },
+      parameters: {
+        size: params.resolution,
+        duration: params.duration
+      }
+    };
+    console.log('?? ~ data:', data);
+
+    const result = await this.request<VideoGenerationResponse>('/api/generate-video', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    console.log('?? ~ result:', result);
+
+    return result;
+  }
+
+  /**
+   * 查询视频任务状态
+   * @param taskId 任务ID
+   * @returns Promise<ServiceResult<VideoTaskResponse>>
+   */
+  async queryVideoTask(taskId: string): Promise<ServiceResult<VideoTaskResponse>> {
+    const result = await this.request<VideoTaskResponse>(`/api/query-video-task/${taskId}`, {
+      method: 'GET'
+    });
+
+    return result;
+  }
 }
 
 export const apiService = new ApiService();
+
+/**
+ * 异步任务状态枚举
+ */
+enum TaskStatus {
+  PENDING = 'PENDING',
+  RUNNING = 'RUNNING',
+  SUCCEEDED = 'SUCCEEDED',
+  FAILED = 'FAILED'
+}
+
+/**
+ * 轮询任务状态直到完成
+ */
+export const pollTaskStatus = async (
+  taskId: string,
+  apiKey: string,
+  maxAttempts = 60,
+  interval = 3000
+) => {
+  const taskUrl = `https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const response = await fetch(taskUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${apiKey}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`查询任务状态失败: ${response.status}`);
+      }
+
+      const taskData = await response.json();
+      console.log(`任务状态查询 ${attempt + 1}/${maxAttempts}:`, taskData);
+
+      const status = taskData.output.task_status;
+
+      if (status === TaskStatus.SUCCEEDED) {
+        return { success: true, data: taskData };
+      }
+
+      if (status === TaskStatus.FAILED) {
+        return {
+          success: false,
+          error: taskData.task_metrics?.error_message || '任务执行失败'
+        };
+      }
+
+      // 如果任务还在运行中，等待后继续轮询
+      if (status === TaskStatus.PENDING || status === TaskStatus.RUNNING) {
+        await new Promise(resolve => setTimeout(resolve, interval));
+        continue;
+      }
+
+      // 未知状态
+      return {
+        success: false,
+        error: `未知任务状态: ${status}`
+      };
+    } catch (error) {
+      console.error(`任务状态查询失败 (尝试 ${attempt + 1}):`, error);
+
+      // 如果不是最后一次尝试，继续重试
+      if (attempt < maxAttempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, interval));
+        continue;
+      }
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : '任务状态查询失败'
+      };
+    }
+  }
+
+  return {
+    success: false,
+    error: '任务执行超时，请稍后重试'
+  };
+};
 
 /**
  * 生成图像的便捷方法
@@ -251,3 +424,10 @@ export const generateImage = (params: GenerateImageParams) => apiService.generat
  */
 export const generateImageToImage = (params: GenerateImageToImageParams) =>
   apiService.generateImageToImage(params);
+
+/**
+ * 生成视频的便捷方法
+ * @param params 生成参数
+ * @returns Promise<ServiceResult<VideoGenerationResponse>>
+ */
+export const generateVideo = (params: GenerateVideoParams) => apiService.generateVideo(params);

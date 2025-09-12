@@ -272,7 +272,7 @@ export default function TextToImagePage() {
     <div className='bg-[#0D0D12] min-h-screen text-white'>
       <Header />
       <Sidebar />
-      <main className='ml-25 pt-14'>
+      <main className='ml-20 pt-14'>
         <div className='flex h-[calc(100vh-56px)] p-4 gap-4'>
           {/* Left Control Panel */}
           <div className='w-[380px] bg-[#24222D] p-4 flex flex-col'>
@@ -487,7 +487,7 @@ export default function TextToImagePage() {
               <Button
                 onClick={handleGenerate}
                 disabled={prompt.length === 0 || isGenerating}
-                className='w-full h-12 bg-primary hover:bg-primary/90 text-lg disabled:opacity-50'
+                className='w-full h-12 bg-primary hover:bg-primary/90 text-lg'
               >
                 <Sparkles className={cn('w-5 h-5 mr-2', isGenerating && 'animate-spin')} />
                 {isGenerating ? '生成中...' : '生成'}
@@ -497,35 +497,23 @@ export default function TextToImagePage() {
 
           {/* Right Image Display */}
           <div className='flex flex-col flex-1 bg-[#24222D] p-4'>
-            <div className='flex items-center justify-between mb-6'>
-              <h2 className='text-sm'>示例图片</h2>
-              <div className='flex items-center gap-2'>
-                {isGenerating && (
-                  <div className='flex items-center gap-2 text-sm text-gray-400'>
-                    <RefreshCw className='w-4 h-4 animate-spin' />
-                    生成中...
-                  </div>
-                )}
-                {generatedImages.length > 0 && !isGenerating && (
-                  <div className='flex items-center gap-2'>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      onClick={handleDownloadCurrent}
-                      disabled={isDownloading}
-                      className={cn(
-                        'text-xs',
-                        'bg-[#383842] border-[#4a4a54] text-white',
-                        'hover:bg-[#FF3466] hover:border-[#FF3466] hover:text-white'
-                      )}
-                    >
-                      <Download className='w-4 h-4' />
-                      {isDownloading ? '下载中...' : '下载当前图片'}
-                    </Button>
-                  </div>
-                )}
+            {generatedImages.length > 0 && !isGenerating && (
+              <div className='flex justify-end mb-2'>
+                <Button
+                  size='sm'
+                  variant='outline'
+                  onClick={handleDownloadCurrent}
+                  className={cn(
+                    'text-xs',
+                    'bg-[#383842] border-[#4a4a54] text-white',
+                    'hover:bg-[#FF3466] hover:border-[#FF3466] hover:text-white'
+                  )}
+                >
+                  <Download className='w-4 h-4' />
+                  下载当前图片
+                </Button>
               </div>
-            </div>
+            )}
 
             {/* 显示生成的图片或示例图片 */}
             <ImageCarouselMol

@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Type, ImageIcon } from 'lucide-react';
+import { Type, ImageIcon, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
@@ -10,11 +10,12 @@ export default function Sidebar() {
 
   const menuItems = [
     { id: 'text-to-image', icon: Type, label: '文生图', href: '/text-to-image' },
-    { id: 'image-to-image', icon: ImageIcon, label: '图生图', href: '/image-to-image' }
+    { id: 'image-to-image', icon: ImageIcon, label: '图生图', href: '/image-to-image' },
+    { id: 'text-to-video', icon: Video, label: '文生视频', href: '/text-to-video' }
   ];
 
   return (
-    <aside className='fixed top-14 left-0 bottom-0 w-25 bg-[#24222D] border-r border-gray-700 z-40 flex flex-col'>
+    <aside className='fixed top-14 left-0 bottom-0 w-20 bg-[#24222D] border-r border-gray-700 z-40 flex flex-col'>
       <nav className='flex-grow pt-10 space-y-1'>
         {menuItems.map(item => {
           const isActive = pathname === item.href;
