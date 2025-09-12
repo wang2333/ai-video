@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       try {
         const errorData = JSON.parse(errorText);
         errorMessage = errorData.message || errorData.code || errorMessage;
-      } catch (e) {
+      } catch {
         errorMessage += ` ${response.statusText}`;
       }
 

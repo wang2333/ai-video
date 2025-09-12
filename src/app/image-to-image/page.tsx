@@ -1,17 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
-import {
-  Sparkles,
-  Info,
-  RefreshCw,
-  ChevronRight,
-  AlertCircle,
-  Download,
-  Upload
-} from 'lucide-react';
+import { Sparkles, Info, RefreshCw, AlertCircle, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 

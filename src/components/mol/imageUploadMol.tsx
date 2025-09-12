@@ -46,20 +46,23 @@ export function ImageUploadMol({
   /**
    * 验证文件
    */
-  const validateFile = (file: File): string | null => {
-    // 检查文件类型
-    if (!file.type.startsWith('image/')) {
-      return '请上传图片文件';
-    }
+  const validateFile = useCallback(
+    (file: File): string | null => {
+      // 检查文件类型
+      if (!file.type.startsWith('image/')) {
+        return '请上传图片文件';
+      }
 
-    // 检查文件大小
-    const fileSizeMB = file.size / (1024 * 1024);
-    if (fileSizeMB > maxSize) {
-      return `文件大小不能超过${maxSize}MB`;
-    }
+      // 检查文件大小
+      const fileSizeMB = file.size / (1024 * 1024);
+      if (fileSizeMB > maxSize) {
+        return `文件大小不能超过${maxSize}MB`;
+      }
 
-    return null;
-  };
+      return null;
+    },
+    [maxSize]
+  );
 
   /**
    * 将文件转换为base64
@@ -110,13 +113,13 @@ export function ImageUploadMol({
         };
 
         onImageUpload?.(uploadedImage);
-      } catch (error) {
+      } catch {
         setError('图片处理失败，请重试');
       } finally {
         setIsProcessing(false);
       }
     },
-    [maxSize, onImageUpload]
+    [validateFile, onImageUpload]
   );
 
   /**
@@ -182,13 +185,13 @@ export function ImageUploadMol({
   /**
    * 格式化文件大小
    */
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  // const formatFileSize = (bytes: number): string => {
+  //   if (bytes === 0) return '0 Bytes';
+  //   const k = 1024;
+  //   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  //   const i = Math.floor(Math.log(bytes) / Math.log(k));
+  //   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  // };
 
   return (
     <div className={cn('w-full min-h-56', className)}>
