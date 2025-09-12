@@ -6,6 +6,16 @@ export interface GenerateImageParams {
   outputCount: number;
 }
 
+export interface GenerateImageToImageParams {
+  url: string;
+  model: string;
+  prompt: string;
+  imageUrl: string; // 参考图片URL
+  sieze: string;
+  outputCount: number;
+  onProgress?: (status: string) => void; // 进度回调
+}
+
 /**
  * 生成的图像数据
  */
@@ -37,6 +47,23 @@ export interface QwenApiResponse2 {
     results?: Array<{
       url: string;
     }>;
+  };
+}
+
+export interface WanxImageEditResponse {
+  task_id?: string;
+  task_status?: 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+  output?: {
+    results?: Array<{
+      url: string;
+    }>;
+  };
+  request_id?: string;
+  usage?: {
+    image_count: number;
+  };
+  task_metrics?: {
+    error_message?: string;
   };
 }
 /**
@@ -160,6 +187,52 @@ class ApiService {
       data: images
     };
   }
+
+  /**
+   * 图生图API调用
+   * @param params 生成参数
+   * @returns Promise<ServiceResult<GeneratedImage[]>>
+   */
+  async generateImageToImage(
+    params: GenerateImageToImageParams
+  ): Promise<ServiceResult<GeneratedImage[]>> {
+    const data = {
+      url: params.url,
+      model: params.model,
+      imageUrl: params.imageUrl,
+      prompt: params.prompt,
+      outputCount: params.outputCount,
+      size: params.sieze
+    };
+
+    // 发送请求到专门的图生图API路由
+    const result = await this.request<WanxImageEditResponse>('/api/image-to-image', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error
+      };
+    }
+
+    // 处理万相图像编辑模型的响应
+    let images: GeneratedImage[] = [];
+    if (params.model === 'wanx2.1-imageedit') {
+      images =
+        (result.data as WanxImageEditResponse)?.output?.results?.map((result, index) => ({
+          id: Date.now() + index,
+          src: result.url
+        })) || [];
+    }
+
+    return {
+      success: true,
+      data: images
+    };
+  }
 }
 
 export const apiService = new ApiService();
@@ -170,3 +243,11 @@ export const apiService = new ApiService();
  * @returns Promise<ServiceResult<GeneratedImage[]>>
  */
 export const generateImage = (params: GenerateImageParams) => apiService.generateImage(params);
+
+/**
+ * 图生图的便捷方法
+ * @param params 生成参数
+ * @returns Promise<ServiceResult<GeneratedImage[]>>
+ */
+export const generateImageToImage = (params: GenerateImageToImageParams) =>
+  apiService.generateImageToImage(params);

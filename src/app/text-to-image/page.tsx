@@ -280,198 +280,188 @@ export default function TextToImagePage() {
               <h1 className='text-xl'>文本转图像AI</h1>
 
               {/* Model Selection */}
-              <div>
-                <label className='block text-sm text-gray-300 mb-2'>模型</label>
-                <SelectMol
-                  options={models}
-                  value={selectedModel}
-                  onValueChange={setSelectedModel}
-                  variant='dark'
-                  size='lg'
-                  renderTrigger={selectedOption => {
-                    if (!selectedOption) return null;
-                    const model = selectedOption as SelectOption;
-                    return (
-                      <div className='flex items-center gap-3 py-1'>
-                        <div className='w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center'>
-                          <Image
-                            src={model.icon}
-                            alt={model.label}
-                            unoptimized
-                            width={24}
-                            height={24}
-                          />
-                        </div>
-                        <div className='text-left'>
-                          <p className='text-sm text-white'>{model.label}</p>
-                          <p className='text-xs text-gray-400'>{model.description}</p>
-                        </div>
-                      </div>
-                    );
-                  }}
-                  renderItem={option => (
-                    <div className='flex items-center gap-3'>
-                      <div className='w-8 h-8 rounded-md bg-gray-700 flex items-center justify-center'>
+              <label className='block text-sm text-gray-300 mb-2'>模型</label>
+              <SelectMol
+                options={models}
+                value={selectedModel}
+                onValueChange={setSelectedModel}
+                variant='dark'
+                size='lg'
+                renderTrigger={selectedOption => {
+                  if (!selectedOption) return null;
+                  const model = selectedOption as SelectOption;
+                  return (
+                    <div className='flex items-center gap-3 py-1'>
+                      <div className='w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center'>
                         <Image
-                          src={option.icon}
-                          alt={option.label}
+                          src={model.icon}
+                          alt={model.label}
                           unoptimized
                           width={24}
                           height={24}
                         />
                       </div>
-                      <div>
-                        <p className='text-white'>{option.label}</p>
-                        <p className='text-xs text-gray-400'>{option.description}</p>
+                      <div className='text-left'>
+                        <p className='text-sm text-white'>{model.label}</p>
+                        <p className='text-xs text-gray-400'>{model.description}</p>
                       </div>
                     </div>
-                  )}
-                />
-              </div>
+                  );
+                }}
+                renderItem={option => (
+                  <div className='flex items-center gap-3'>
+                    <div className='w-8 h-8 rounded-md bg-gray-700 flex items-center justify-center'>
+                      <Image
+                        src={option.icon}
+                        alt={option.label}
+                        unoptimized
+                        width={24}
+                        height={24}
+                      />
+                    </div>
+                    <div>
+                      <p className='text-white'>{option.label}</p>
+                      <p className='text-xs text-gray-400'>{option.description}</p>
+                    </div>
+                  </div>
+                )}
+              />
 
               {/* Prompt */}
-              <div>
-                <label className='block text-sm text-gray-300 mb-2'>提示词</label>
-                <div className='relative'>
-                  <Textarea
-                    value={prompt}
-                    onChange={e => setPrompt(e.target.value)}
-                    placeholder='你想要生成什么？'
-                    className='h-32 bg-[#383842] !text-xs resize-none border-none focus-visible:ring-0'
-                  />
-                  <div className='absolute bottom-2 right-2 text-xs text-gray-500'>
-                    {prompt.length}/{2000}
-                  </div>
+              <label className='block text-sm text-gray-300 mb-2'>提示词</label>
+              <div className='relative'>
+                <Textarea
+                  value={prompt}
+                  onChange={e => setPrompt(e.target.value)}
+                  placeholder='你想要生成什么？'
+                  className='h-32 bg-[#383842] !text-xs resize-none border-none focus-visible:ring-0'
+                />
+                <div className='absolute bottom-2 right-2 text-xs text-gray-500'>
+                  {prompt.length}/{2000}
                 </div>
-                <div className='flex items-center gap-2 text-xs text-gray-400 mt-2'>
-                  <span>例子:</span>
-                  <div className='flex flex-wrap gap-2'>
-                    {examples.map(example => (
-                      <Button
-                        key={example.label}
-                        onClick={() => setPrompt(example.prompt)}
-                        variant='ghost'
-                        className='h-auto p-0 text-xs text-gray-400 hover:text-[#FF3466] hover:bg-transparent'
-                      >
-                        {example.label}
-                      </Button>
-                    ))}
-                  </div>
-                  <Button
-                    onClick={refreshExamples}
-                    variant='ghost'
-                    size='icon'
-                    className='ml-auto h-6 w-6 text-gray-400 hover:text-[#FF3466]'
-                  >
-                    <RefreshCw className='w-4 h-4' />
-                  </Button>
+              </div>
+              <div className='flex items-center gap-2 text-xs text-gray-400 mt-2'>
+                <span>例子:</span>
+                <div className='flex flex-wrap gap-2'>
+                  {examples.map(example => (
+                    <Button
+                      key={example.label}
+                      onClick={() => setPrompt(example.prompt)}
+                      variant='ghost'
+                      className='h-auto p-0 text-xs text-gray-400 hover:text-[#FF3466] hover:bg-transparent'
+                    >
+                      {example.label}
+                    </Button>
+                  ))}
                 </div>
+                <Button
+                  onClick={refreshExamples}
+                  variant='ghost'
+                  size='icon'
+                  className='ml-auto h-6 w-6 text-gray-400 hover:text-[#FF3466]'
+                >
+                  <RefreshCw className='w-4 h-4' />
+                </Button>
               </div>
 
               {/* Style */}
-              <div>
-                <label className='block text-sm text-gray-300 mb-2'>风格</label>
-                <Button
-                  variant='outline'
-                  className='w-full justify-between bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] h-auto'
-                  onClick={() => setStyleDialogOpen(true)}
-                >
-                  {selectedStyleOption ? (
-                    <div className='flex items-center gap-3'>
-                      <div className='w-10 h-10 bg-gray-700'>
+              <label className='block text-sm text-gray-300 mb-2'>风格</label>
+              <Button
+                variant='outline'
+                className='w-full justify-between bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] h-auto'
+                onClick={() => setStyleDialogOpen(true)}
+              >
+                {selectedStyleOption ? (
+                  <div className='flex items-center gap-3'>
+                    <div className='w-10 h-10 bg-gray-700'>
+                      <Image
+                        src={selectedStyleOption.preview}
+                        alt={selectedStyleOption.label}
+                        width={40}
+                        height={40}
+                        className='w-full h-full object-cover'
+                        unoptimized
+                      />
+                    </div>
+                    <span className='text-sm text-white'>{selectedStyleOption.label}</span>
+                  </div>
+                ) : (
+                  <span className='text-gray-400 text-sm py-2'>请选择风格</span>
+                )}
+                <ChevronRight className='w-4 h-4 text-gray-400' />
+              </Button>
+
+              <DialogMol
+                open={styleDialogOpen}
+                onOpenChange={setStyleDialogOpen}
+                title='选择风格'
+                maxWidth='60vw'
+              >
+                <div className='grid grid-cols-4 gap-3'>
+                  {styles.map(style => (
+                    <div
+                      key={style.label}
+                      className={cn(
+                        'rounded-lg cursor-pointer bg-[#383842] hover:bg-[#4a4a54]',
+                        style.label === selectedStyle && 'ring-2 ring-[#FF3466]'
+                      )}
+                      onClick={() => {
+                        setSelectedStyle(style.label);
+                        setStyleDialogOpen(false);
+                      }}
+                    >
+                      <div className='aspect-square'>
                         <Image
-                          src={selectedStyleOption.preview}
-                          alt={selectedStyleOption.label}
-                          width={40}
-                          height={40}
-                          className='w-full h-full object-cover'
+                          src={style.preview}
+                          alt={style.label}
+                          width={120}
+                          height={120}
+                          className='w-full h-full object-cover rounded-t-lg'
                           unoptimized
                         />
                       </div>
-                      <span className='text-sm text-white'>{selectedStyleOption.label}</span>
+                      <p className='p-2 text-sm text-white text-center'>{style.label}</p>
                     </div>
-                  ) : (
-                    <span className='text-gray-400 text-sm py-2'>请选择风格</span>
-                  )}
-                  <ChevronRight className='w-4 h-4 text-gray-400' />
-                </Button>
-
-                <DialogMol
-                  open={styleDialogOpen}
-                  onOpenChange={setStyleDialogOpen}
-                  title='选择风格'
-                  maxWidth='60vw'
-                >
-                  <div className='grid grid-cols-4 gap-3'>
-                    {styles.map(style => (
-                      <div
-                        key={style.label}
-                        className={cn(
-                          'rounded-lg cursor-pointer bg-[#383842] hover:bg-[#4a4a54]',
-                          style.label === selectedStyle && 'ring-2 ring-[#FF3466]'
-                        )}
-                        onClick={() => {
-                          setSelectedStyle(style.label);
-                          setStyleDialogOpen(false);
-                        }}
-                      >
-                        <div className='aspect-square'>
-                          <Image
-                            src={style.preview}
-                            alt={style.label}
-                            width={120}
-                            height={120}
-                            className='w-full h-full object-cover rounded-t-lg'
-                            unoptimized
-                          />
-                        </div>
-                        <p className='p-2 text-sm text-white text-center'>{style.label}</p>
-                      </div>
-                    ))}
-                  </div>
-                </DialogMol>
-              </div>
-
-              {/* Aspect Ratio */}
-              <div>
-                <label className='block text-sm text-gray-300 mb-2'>长宽比</label>
-                <div className='grid grid-cols-7 gap-2'>
-                  {aspectRatios.map(ratio => (
-                    <Button
-                      key={ratio}
-                      variant='outline'
-                      onClick={() => setAspectRatio(ratio)}
-                      className={cn(
-                        'h-16 flex-col bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] hover:text-white',
-                        aspectRatio === ratio && 'border-primary'
-                      )}
-                    >
-                      <div className='bg-primary' style={getAspectRatioStyle(ratio)} />
-                      <span className='text-xs'>{ratio}</span>
-                    </Button>
                   ))}
                 </div>
+              </DialogMol>
+
+              {/* Aspect Ratio */}
+              <label className='block text-sm text-gray-300 mb-2'>长宽比</label>
+              <div className='grid grid-cols-7 gap-2'>
+                {aspectRatios.map(ratio => (
+                  <Button
+                    key={ratio}
+                    variant='outline'
+                    onClick={() => setAspectRatio(ratio)}
+                    className={cn(
+                      'h-16 flex-col bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] hover:text-white',
+                      aspectRatio === ratio && 'border-primary'
+                    )}
+                  >
+                    <div className='bg-primary' style={getAspectRatioStyle(ratio)} />
+                    <span className='text-xs'>{ratio}</span>
+                  </Button>
+                ))}
               </div>
 
               {/* Output Count */}
-              <div>
-                <label className='block text-sm text-gray-300 mb-2'>输出图像数量</label>
-                <div className='grid grid-cols-4 gap-2'>
-                  {outputCounts.map(count => (
-                    <Button
-                      key={count}
-                      variant={outputCount === count ? 'default' : 'outline'}
-                      onClick={() => setOutputCount(count)}
-                      className={
-                        outputCount === count
-                          ? 'bg-primary hover:bg-primary/90'
-                          : 'bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] hover:text-white'
-                      }
-                    >
-                      {count}
-                    </Button>
-                  ))}
-                </div>
+              <label className='block text-sm text-gray-300 mb-2'>输出图像数量</label>
+              <div className='grid grid-cols-4 gap-2'>
+                {outputCounts.map(count => (
+                  <Button
+                    key={count}
+                    variant={outputCount === count ? 'default' : 'outline'}
+                    onClick={() => setOutputCount(count)}
+                    className={
+                      outputCount === count
+                        ? 'bg-primary hover:bg-primary/90'
+                        : 'bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] hover:text-white'
+                    }
+                  >
+                    {count}
+                  </Button>
+                ))}
               </div>
 
               {/* Credit Cost */}
