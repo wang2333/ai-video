@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import {
@@ -19,25 +19,44 @@ export interface ImageCarouselProps {
     alt?: string;
   }>;
   className?: string;
+  onCurrentChange?: (current: number) => void;
 }
 
-export function ImageCarouselMol({ images, className }: ImageCarouselProps) {
+/**
+ * 图片轮播组件
+ * @param images - 图片数组
+ * @param className - 自定义样式类名
+ * @param onCurrentChange - 当前图片切换时的回调函数，参数为当前图片的索引
+ */
+export function ImageCarouselMol({ images, className, onCurrentChange }: ImageCarouselProps) {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
 
+  /**
+   * 处理轮播图切换事件
+   */
+  const handleSelect = useCallback(() => {
+    if (!api) return;
+
+    const selectedIndex = api.selectedScrollSnap();
+    setCurrent(selectedIndex);
+    onCurrentChange?.(selectedIndex);
+  }, [api, onCurrentChange]);
+
   useEffect(() => {
-    if (!api) {
-      return;
-    }
+    if (!api) return;
 
+    // 监听选择事件
+    api.on('select', handleSelect);
     setCount(api.scrollSnapList().length);
-    setCurrent(api.selectedScrollSnap());
+    // 初始化当前索引
+    handleSelect();
 
-    api.on('select', () => {
-      setCurrent(api.selectedScrollSnap());
-    });
-  }, [api]);
+    return () => {
+      api.off('select', handleSelect);
+    };
+  }, [api, images, handleSelect]);
 
   return (
     <div className={cn('relative flex items-center justify-center', className)}>
@@ -64,23 +83,28 @@ export function ImageCarouselMol({ images, className }: ImageCarouselProps) {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className='absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full bg-primary hover:bg-primary/90 hover:text-white border-none text-white h-10 w-10' />
-        <CarouselNext className='absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full bg-primary hover:bg-primary/90 hover:text-white border-none text-white h-10 w-10' />
+        {images.length > 1 && (
+          <>
+            <CarouselPrevious className='absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full bg-primary hover:bg-primary/90 hover:text-white border-none text-white h-10 w-10' />
+            <CarouselNext className='absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 p-2 rounded-full bg-primary hover:bg-primary/90 hover:text-white border-none text-white h-10 w-10' />
+          </>
+        )}
+        {/* 指示器 */}
+        {images.length > 1 && (
+          <div className='absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2'>
+            {Array.from({ length: count }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => api?.scrollTo(index)}
+                className={cn(
+                  'w-2 h-2 rounded-full bg-white/30 transition-colors',
+                  current === index ? 'bg-white' : 'hover:bg-white/50'
+                )}
+              />
+            ))}
+          </div>
+        )}
       </Carousel>
-
-      {/* 指示器 */}
-      <div className='absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2'>
-        {Array.from({ length: count }).map((_, index) => (
-          <button
-            key={index}
-            onClick={() => api?.scrollTo(index)}
-            className={cn(
-              'w-2 h-2 rounded-full bg-white/30 transition-colors',
-              current === index ? 'bg-white' : 'hover:bg-white/50'
-            )}
-          />
-        ))}
-      </div>
     </div>
   );
 }

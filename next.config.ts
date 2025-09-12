@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'dashscope-result-*.oss-*.aliyuncs.com'
+      },
+      {
+        protocol: 'https',
         hostname: 'cdn.pollo.ai'
       },
       {
