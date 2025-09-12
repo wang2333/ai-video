@@ -1,59 +1,120 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
-import { Sparkles, Info, RefreshCw, AlertCircle, Download } from 'lucide-react';
+import { Sparkles, Info, AlertCircle, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { ImageCarouselMol } from '@/components/mol/imageCarouselMol';
+import { VideoCarouselMol } from '@/components/mol/videoCarouselMol';
 import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { ImageUploadMol, UploadedImage } from '@/components/mol/imageUploadMol';
-import { downloadCurrentImage } from '@/lib/downloadUtils';
-import { generateImageToImage, GeneratedImage } from '@/lib/apiService';
+import { downloadCurrentVideo } from '@/lib/downloadUtils';
+import { GeneratedVideo, generateImageToVideo } from '@/lib/apiService';
 
-// Model data - 图生图支持的模型
+/**
+ * 视频分辨率配置 - 包含480P、720P和1080P
+ */
+const VIDEO_RESOLUTIONS = {
+  '480P': [
+    { value: '832*480', label: '832×480', ratio: '16:9' },
+    { value: '480*832', label: '480×832', ratio: '9:16' },
+    { value: '624*624', label: '624×624', ratio: '1:1' }
+  ],
+  '720P': [
+    { value: '1280*720', label: '1280×720', ratio: '16:9' },
+    { value: '720*1280', label: '720×1280', ratio: '9:16' },
+    { value: '960*960', label: '960×960', ratio: '1:1' },
+    { value: '1088*832', label: '1088×832', ratio: '4:3' },
+    { value: '832*1088', label: '832×1088', ratio: '3:4' }
+  ],
+  '1080P': [
+    { value: '1920*1080', label: '1920×1080', ratio: '16:9' },
+    { value: '1080*1920', label: '1080×1920', ratio: '9:16' },
+    { value: '1440*1440', label: '1440×1440', ratio: '1:1' },
+    { value: '1632*1248', label: '1632×1248', ratio: '4:3' },
+    { value: '1248*1632', label: '1248×1632', ratio: '3:4' }
+  ]
+};
+
+// 图生视频支持的模型
 const models = [
   {
-    value: 'wanx2.1-imageedit',
-    label: '通用图像编辑',
-    description: '通义万相-通用图像编辑',
+    value: 'wanx2.1-i2v-turbo',
+    label: '通义万相2.1-turbo',
+    description: '万相2.1极速版',
     icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis'
-  }
-];
+    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
+    qualityLevels: ['480P', '720P']
+  },
+  {
+    value: 'wanx2.1-i2v-plus',
+    label: '通义万相2.1-Plus',
+    description: '万相2.1专业版',
+    icon: '/image/Group.svg',
+    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
+    qualityLevels: ['720P']
+  },
 
-// Mock data for carousel
-const sampleImages = [
-  { id: 1, src: '/image/demo1.jpeg' },
-  { id: 2, src: '/image/demo2.jpeg' },
-  { id: 3, src: '/image/demo3.jpeg' }
+  {
+    value: 'wan2.2-i2v-flash',
+    label: '通义万相2.2-Flash',
+    description: '万相2.2极速版',
+    icon: '/image/Group.svg',
+    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
+    qualityLevels: ['480P', '720P']
+  },
+  {
+    value: 'wan2.2-i2v-plus',
+    label: '通义万相2.2-Plus',
+    description: '万相2.2专业版',
+    icon: '/image/Group.svg',
+    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
+    qualityLevels: ['480P', '1080P']
+  }
 ];
 
 const outputCounts = [1, 2, 3, 4];
 
-export default function ImageToImage() {
+export default function ImageToVideoPage() {
   const [prompt, setPrompt] = useState('');
-  const [selectedModel, setSelectedModel] = useState('wanx2.1-imageedit');
+  const [selectedModel, setSelectedModel] = useState('wanx2.1-i2v-turbo');
+  const [qualityLevel, setQualityLevel] = useState('480P');
+  const [videoDuration, setVideoDuration] = useState(5);
   const [outputCount, setOutputCount] = useState(1);
 
-  // 图生图特有状态
+  // 图生视频特有状态
   const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatingStatus, setGeneratingStatus] = useState<string>('');
-  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>(sampleImages);
+  const [generatedVideos, setGeneratedVideos] = useState<GeneratedVideo[]>([
+    { id: 1, src: '/demo.mp4' }
+  ]);
   const [error, setError] = useState<string | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+
+  // 当模型改变时，重置画质和长宽比为该模型的第一个可用选项
+  useEffect(() => {
+    const availableQualities = getAvailableQualityLevels();
+    if (availableQualities.length > 0 && !availableQualities.includes(qualityLevel)) {
+      setQualityLevel(availableQualities[0]);
+    }
+  }, [selectedModel, qualityLevel]);
+
+  // 根据当前选择的模型获取可用的画质选项
+  const getAvailableQualityLevels = () => {
+    const selectedModelData = models.find(m => m.value === selectedModel);
+    return selectedModelData?.qualityLevels || Object.keys(VIDEO_RESOLUTIONS);
+  };
+
+  const availableQualityLevels = getAvailableQualityLevels();
 
   /**
    * 处理图片上传
    */
   const handleImageUpload = (image: UploadedImage) => {
-    console.log('?? ~ image:', image);
     setUploadedImage(image);
     setError(null);
   };
@@ -67,27 +128,25 @@ export default function ImageToImage() {
   };
 
   /**
-   * 下载当前显示的图片
+   * 下载当前显示的视频
    */
   const handleDownloadCurrent = async () => {
-    if (generatedImages.length === 0) return;
+    if (generatedVideos.length === 0) return;
 
     try {
-      setIsDownloading(true);
-      await downloadCurrentImage(generatedImages, currentImageIndex);
+      // 注意：这里需要适配视频下载逻辑
+      await downloadCurrentVideo(generatedVideos, currentVideoIndex);
     } catch (error) {
       console.error('下载失败:', error);
       setError('下载失败，请重试');
-    } finally {
-      setIsDownloading(false);
     }
   };
 
   /**
-   * 轮播图当前图片变化回调
+   * 轮播图当前视频变化回调
    */
-  const handleCurrentImageChange = (index: number) => {
-    setCurrentImageIndex(index);
+  const handleCurrentVideoChange = (index: number) => {
+    setCurrentVideoIndex(index);
   };
 
   /**
@@ -95,15 +154,15 @@ export default function ImageToImage() {
    */
   const validateParams = (): string | null => {
     if (!uploadedImage) {
-      return '请先上传参考图片';
+      return '请先上传图片文件';
     }
 
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
-      return '请输入提示词';
+      return '请输入动作描述';
     }
     if (trimmedPrompt.length > 2000) {
-      return `提示词长度不能超过2000个字符`;
+      return `动作描述长度不能超过2000个字符`;
     }
     if (!selectedModel) {
       return '请选择模型';
@@ -115,7 +174,7 @@ export default function ImageToImage() {
   };
 
   /**
-   * 生成图像的主要函数
+   * 图生视频的主要函数
    */
   const handleGenerate = async () => {
     // 1. 参数校验
@@ -132,39 +191,38 @@ export default function ImageToImage() {
     }
 
     if (!uploadedImage) {
-      setError('请先上传参考图片');
+      setError('请先上传图片文件');
       return;
     }
 
     setIsGenerating(true);
     setError(null);
-    setGeneratingStatus('创建任务中...');
 
     try {
-      const result = await generateImageToImage({
+      // 使用抽取的API服务方法
+      const result = await generateImageToVideo({
         url: model.url,
         model: model.value,
         prompt: prompt.trim(),
         imageUrl: uploadedImage.base64,
-        sieze: '1024*1024', // 默认尺寸
-        outputCount: outputCount,
-        onProgress: (status: string) => {
-          setGeneratingStatus(status);
-        }
+        resolution: qualityLevel,
+        duration: videoDuration
       });
 
       if (result.success && result.data) {
-        setGeneratedImages(result.data);
-        setCurrentImageIndex(0); // 重置到第一张图片
-        setGeneratingStatus('');
+        setGeneratedVideos([
+          {
+            id: Date.now(),
+            src: result.data.output.video_url
+          }
+        ]);
+        setCurrentVideoIndex(0); // 重置到第一个视频
       } else {
-        setError(result.error || '生成图像失败');
-        setGeneratingStatus('');
+        throw new Error(result.error || '图生视频失败');
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '生成图像时发生未知错误';
+      const errorMessage = err instanceof Error ? err.message : '图生视频时发生未知错误';
       setError(errorMessage);
-      setGeneratingStatus('');
     } finally {
       setIsGenerating(false);
     }
@@ -179,7 +237,7 @@ export default function ImageToImage() {
           {/* Left Control Panel */}
           <div className='w-[380px] bg-[#24222D] p-4 flex flex-col'>
             <div className='flex-1 overflow-y-auto space-y-4'>
-              <h1 className='text-xl'>图像转图像AI</h1>
+              <h1 className='text-xl'>图像转视频AI</h1>
 
               {/* Model Selection */}
               <div>
@@ -231,26 +289,27 @@ export default function ImageToImage() {
                 />
               </div>
 
-              {/* Reference Image Upload */}
+              {/* Image Upload */}
               <div>
-                <label className='block text-sm text-gray-300 mb-2'>参考图片</label>
+                <label className='block text-sm text-gray-300 mb-2'>上传图片</label>
                 <ImageUploadMol
                   onImageUpload={handleImageUpload}
                   onImageRemove={handleImageRemove}
                   uploadedImage={uploadedImage}
                   disabled={isGenerating}
-                  maxSize={10}
+                  maxSize={10} // 10MB for image
+                  accept='image/*'
                 />
               </div>
 
               {/* Prompt */}
               <div>
-                <label className='block text-sm text-gray-300 mb-2'>提示词</label>
+                <label className='block text-sm text-gray-300 mb-2'>动作描述</label>
                 <div className='relative'>
                   <Textarea
                     value={prompt}
                     onChange={e => setPrompt(e.target.value)}
-                    placeholder='描述你希望如何修改这张图片...'
+                    placeholder='描述你希望图片中的元素如何动起来...'
                     className='h-32 bg-[#383842] !text-xs resize-none border-none focus-visible:ring-0'
                   />
                   <div className='absolute bottom-2 right-2 text-xs text-gray-500'>
@@ -259,13 +318,66 @@ export default function ImageToImage() {
                 </div>
               </div>
 
+              {/* Quality Level */}
+              <div>
+                <label className='block text-sm text-gray-300 mb-2'>分辨率</label>
+                <div className='flex gap-2'>
+                  {availableQualityLevels.map(level => (
+                    <Button
+                      key={level}
+                      variant={qualityLevel === level ? 'default' : 'outline'}
+                      onClick={() => setQualityLevel(level)}
+                      className={cn(
+                        'flex-1',
+                        qualityLevel === level
+                          ? 'bg-primary hover:bg-primary/90'
+                          : 'bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] hover:text-white'
+                      )}
+                    >
+                      {level}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Video Duration */}
+              <div>
+                <label className='block text-sm text-gray-300 mb-2'>视频长度</label>
+                <div className='grid grid-cols-2 gap-2'>
+                  <Button
+                    variant={videoDuration === 5 ? 'default' : 'outline'}
+                    onClick={() => setVideoDuration(5)}
+                    className={
+                      videoDuration === 5
+                        ? 'bg-primary hover:bg-primary/90'
+                        : 'bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] hover:text-white'
+                    }
+                  >
+                    5秒
+                  </Button>
+                  <Button
+                    disabled
+                    variant={videoDuration === 10 ? 'default' : 'outline'}
+                    onClick={() => setVideoDuration(10)}
+                    className={
+                      videoDuration === 10
+                        ? 'bg-primary hover:bg-primary/90'
+                        : 'bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] hover:text-white'
+                    }
+                  >
+                    10秒
+                  </Button>
+                </div>
+              </div>
+
               {/* Output Count */}
               <div>
-                <label className='block text-sm text-gray-300 mb-2'>输出图像数量</label>
+                <label className='block text-sm text-gray-300 mb-2'>输出视频数量</label>
                 <div className='grid grid-cols-4 gap-2'>
                   {outputCounts.map(count => (
                     <Button
                       key={count}
+                      disabled={count > 1}
                       variant={outputCount === count ? 'default' : 'outline'}
                       onClick={() => setOutputCount(count)}
                       className={
@@ -286,7 +398,7 @@ export default function ImageToImage() {
                   <span>所需额度:</span>
                   <Info className='w-4 h-4' />
                 </div>
-                <span className='text-white'>{outputCount * 15} 额度</span>
+                <span className='text-white'>{outputCount * 50} 额度</span>
               </div>
             </div>
 
@@ -306,15 +418,16 @@ export default function ImageToImage() {
                 className='w-full h-12 bg-primary hover:bg-primary/90 text-lg'
               >
                 <Sparkles className={cn('w-5 h-5 mr-2', isGenerating && 'animate-spin')} />
-                {isGenerating ? '生成中...' : '生成'}
+                {isGenerating ? '生成中...' : '生成视频'}
               </Button>
             </div>
           </div>
 
-          {/* Right Image Display */}
+          {/* Right Video Display */}
           <div className='flex flex-col flex-1 bg-[#24222D] p-4'>
             <div className='flex justify-end mb-2'>
               <Button
+                disabled={isGenerating}
                 size='sm'
                 variant='outline'
                 onClick={handleDownloadCurrent}
@@ -325,16 +438,20 @@ export default function ImageToImage() {
                 )}
               >
                 <Download className='w-4 h-4' />
-                下载当前图片
+                下载当前视频
               </Button>
             </div>
 
-            {/* 显示生成的图片或示例图片 */}
-            <ImageCarouselMol
-              images={generatedImages}
-              className='flex-1'
-              onCurrentChange={handleCurrentImageChange}
-            />
+            {/* 显示生成的视频或示例视频 */}
+            <div className='flex-1 flex items-center justify-center min-h-0 overflow-hidden'>
+              <VideoCarouselMol
+                videos={generatedVideos}
+                className='w-full h-full max-w-full max-h-full'
+                onCurrentChange={handleCurrentVideoChange}
+                autoPlay={true}
+                showThumbnails={true}
+              />
+            </div>
           </div>
         </div>
       </main>

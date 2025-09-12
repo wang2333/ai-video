@@ -88,6 +88,28 @@ export interface GenerateVideoParams {
 }
 
 /**
+ * 视频提升参数
+ */
+export interface VideoEnhanceParams {
+  url: string;
+  model: string;
+  prompt: string;
+  videoUrl: string; // 原始视频URL
+}
+
+/**
+ * 图生视频参数
+ */
+export interface ImageToVideoParams {
+  url: string;
+  model: string;
+  prompt: string;
+  imageUrl: string; // 原始图片URL
+  resolution: string; // 视频分辨率
+  duration: number; // 视频时长
+}
+
+/**
  * 视频生成API响应
  */
 export interface VideoGenerationResponse {
@@ -312,13 +334,30 @@ class ApiService {
   }
 
   /**
-   * 查询视频任务状态
-   * @param taskId 任务ID
-   * @returns Promise<ServiceResult<VideoTaskResponse>>
+   * 图生视频API调用
+   * @param params 生成参数
+   * @returns Promise<ServiceResult<VideoGenerationResponse>>
    */
-  async queryVideoTask(taskId: string): Promise<ServiceResult<VideoTaskResponse>> {
-    const result = await this.request<VideoTaskResponse>(`/api/query-video-task/${taskId}`, {
-      method: 'GET'
+  async generateImageToVideo(
+    params: ImageToVideoParams
+  ): Promise<ServiceResult<VideoGenerationResponse>> {
+    const data = {
+      url: params.url,
+      model: params.model,
+      input: {
+        prompt: params.prompt,
+        img_url: params.imageUrl
+      },
+      parameters: {
+        resolution: params.resolution,
+        duration: params.duration
+      }
+    };
+
+    // 发送请求到图生视频API路由
+    const result = await this.request<VideoGenerationResponse>('/api/image-to-video', {
+      method: 'POST',
+      body: JSON.stringify(data)
     });
 
     return result;
@@ -431,3 +470,11 @@ export const generateImageToImage = (params: GenerateImageToImageParams) =>
  * @returns Promise<ServiceResult<VideoGenerationResponse>>
  */
 export const generateVideo = (params: GenerateVideoParams) => apiService.generateVideo(params);
+
+/**
+ * 图生视频的便捷方法
+ * @param params 生成参数
+ * @returns Promise<ServiceResult<GeneratedVideo[]>>
+ */
+export const generateImageToVideo = (params: ImageToVideoParams) =>
+  apiService.generateImageToVideo(params);

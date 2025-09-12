@@ -497,23 +497,22 @@ export default function TextToImagePage() {
 
           {/* Right Image Display */}
           <div className='flex flex-col flex-1 bg-[#24222D] p-4'>
-            {generatedImages.length > 0 && !isGenerating && (
-              <div className='flex justify-end mb-2'>
-                <Button
-                  size='sm'
-                  variant='outline'
-                  onClick={handleDownloadCurrent}
-                  className={cn(
-                    'text-xs',
-                    'bg-[#383842] border-[#4a4a54] text-white',
-                    'hover:bg-[#FF3466] hover:border-[#FF3466] hover:text-white'
-                  )}
-                >
-                  <Download className='w-4 h-4' />
-                  下载当前图片
-                </Button>
-              </div>
-            )}
+            <div className='flex justify-end mb-2'>
+              <Button
+                disabled={isGenerating}
+                size='sm'
+                variant='outline'
+                onClick={handleDownloadCurrent}
+                className={cn(
+                  'text-xs',
+                  'bg-[#383842] border-[#4a4a54] text-white',
+                  'hover:bg-[#FF3466] hover:border-[#FF3466] hover:text-white'
+                )}
+              >
+                <Download className='w-4 h-4' />
+                下载当前图片
+              </Button>
+            </div>
 
             {/* 显示生成的图片或示例图片 */}
             <ImageCarouselMol

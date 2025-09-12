@@ -43,24 +43,24 @@ const VIDEO_RESOLUTIONS = {
 const models = [
   {
     value: 'wanx2.1-t2v-turbo',
-    label: '通义万相2.1',
-    description: '通义万相2.1-文生视频-turbo',
+    label: '通义万相2.1-turbo',
+    description: '万相2.1极速版',
     icon: '/image/Group.svg',
     url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
     qualityLevels: ['480P', '720P']
   },
   {
     value: 'wanx2.1-t2v-plus',
-    label: '通义万相2.1',
-    description: '通义万相2.1-文生视频-Plus',
+    label: '通义万相2.1-Plus',
+    description: '万相2.1专业版',
     icon: '/image/Group.svg',
     url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
     qualityLevels: ['720P']
   },
   {
     value: 'wan2.2-t2v-plus',
-    label: '通义万相2.2',
-    description: '通义万相2.2-文生视频-Plus',
+    label: '通义万相2.2-Plus',
+    description: '万相2.2专业版',
     icon: '/image/Group.svg',
     url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
     qualityLevels: ['480P', '1080P']
@@ -347,27 +347,19 @@ export default function TextToVideoPage() {
               </div>
 
               {/* Quality Level - 根据选择的模型动态显示可用画质 */}
-              <label className='block text-sm text-gray-300 mb-2'>画质档位</label>
-              <div
-                className={cn(
-                  'grid gap-2',
-                  availableQualityLevels.length === 1
-                    ? 'grid-cols-1'
-                    : availableQualityLevels.length === 2
-                    ? 'grid-cols-2'
-                    : 'grid-cols-3'
-                )}
-              >
+              <label className='block text-sm text-gray-300 mb-2'>分辨率</label>
+              <div className={cn('flex gap-2')}>
                 {availableQualityLevels.map(level => (
                   <Button
                     key={level}
                     variant={qualityLevel === level ? 'default' : 'outline'}
                     onClick={() => setQualityLevel(level)}
-                    className={
+                    className={cn(
+                      'flex-1',
                       qualityLevel === level
                         ? 'bg-primary hover:bg-primary/90'
                         : 'bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] hover:text-white'
-                    }
+                    )}
                   >
                     {level}
                   </Button>
@@ -376,22 +368,14 @@ export default function TextToVideoPage() {
 
               {/* Aspect Ratio - 根据画质动态显示可用选项 */}
               <label className='block text-sm text-gray-300 mb-2'>长宽比</label>
-              <div
-                className={cn(
-                  'grid gap-2',
-                  availableAspectRatios.length <= 3
-                    ? 'grid-cols-3'
-                    : availableAspectRatios.length <= 5
-                    ? 'grid-cols-5'
-                    : 'grid-cols-7'
-                )}
-              >
+              <div className='flex gap-2'>
                 {availableAspectRatios.map(ratio => (
                   <Button
                     key={ratio}
                     variant='outline'
                     onClick={() => setAspectRatio(ratio)}
                     className={cn(
+                      'flex-1',
                       'h-16 flex-col bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] hover:text-white',
                       aspectRatio === ratio && 'border-primary'
                     )}
@@ -483,42 +467,32 @@ export default function TextToVideoPage() {
 
           {/* Right Video Display */}
           <div className='flex flex-col flex-1 bg-[#24222D] p-4'>
-            {generatedVideos.length > 0 && !isGenerating && (
-              <div className='flex justify-end mb-2'>
-                <Button
-                  size='sm'
-                  variant='outline'
-                  onClick={handleDownloadCurrent}
-                  className={cn(
-                    'text-xs',
-                    'bg-[#383842] border-[#4a4a54] text-white',
-                    'hover:bg-[#FF3466] hover:border-[#FF3466] hover:text-white'
-                  )}
-                >
-                  <Download className='w-4 h-4' />
-                  下载当前视频
-                </Button>
-              </div>
-            )}
+            <div className='flex justify-end mb-2'>
+              <Button
+                disabled={isGenerating}
+                size='sm'
+                variant='outline'
+                onClick={handleDownloadCurrent}
+                className={cn(
+                  'text-xs',
+                  'bg-[#383842] border-[#4a4a54] text-white',
+                  'hover:bg-[#FF3466] hover:border-[#FF3466] hover:text-white'
+                )}
+              >
+                <Download className='w-4 h-4' />
+                下载当前视频
+              </Button>
+            </div>
 
             {/* Video Display Area */}
             <div className='flex-1 flex items-center justify-center min-h-0 overflow-hidden'>
-              {generatedVideos.length > 0 ? (
-                <VideoCarouselMol
-                  videos={generatedVideos}
-                  className='w-full h-full max-w-full max-h-full'
-                  onCurrentChange={setCurrentVideoIndex}
-                  autoPlay={true}
-                  showThumbnails={true}
-                />
-              ) : (
-                <div className='flex flex-col items-center justify-center text-gray-400 space-y-4'>
-                  <div className='w-24 h-24 bg-gray-700 rounded-lg flex items-center justify-center'>
-                    <Play className='w-12 h-12' />
-                  </div>
-                  <p className='text-sm'>输入提示词开始生成视频</p>
-                </div>
-              )}
+              <VideoCarouselMol
+                videos={generatedVideos}
+                className='w-full h-full max-w-full max-h-full'
+                onCurrentChange={setCurrentVideoIndex}
+                autoPlay={true}
+                showThumbnails={true}
+              />
             </div>
           </div>
         </div>

@@ -49,8 +49,24 @@ export function ImageUploadMol({
   const validateFile = useCallback(
     (file: File): string | null => {
       // 检查文件类型
-      if (!file.type.startsWith('image/')) {
+      if (accept === 'image/*' && !file.type.startsWith('image/')) {
         return '请上传图片文件';
+      } else if (accept === 'video/*' && !file.type.startsWith('video/')) {
+        return '请上传视频文件';
+      } else if (accept !== 'image/*' && accept !== 'video/*') {
+        // 对于其他accept类型，进行更通用的检查
+        const acceptTypes = accept.split(',').map(type => type.trim());
+        const isValidType = acceptTypes.some(type => {
+          if (type === '*/*') return true;
+          if (type.endsWith('/*')) {
+            return file.type.startsWith(type.slice(0, -2));
+          }
+          return file.type === type;
+        });
+
+        if (!isValidType) {
+          return `请上传支持的文件类型: ${accept}`;
+        }
       }
 
       // 检查文件大小
@@ -61,7 +77,7 @@ export function ImageUploadMol({
 
       return null;
     },
-    [maxSize]
+    [maxSize, accept]
   );
 
   /**
@@ -209,13 +225,22 @@ export function ImageUploadMol({
           </Button>
 
           <div className='h-56 relative rounded-lg overflow-hidden bg-gray-700'>
-            <Image
-              src={uploadedImage.url}
-              alt={uploadedImage.name}
-              fill
-              className='object-contain'
-              unoptimized
-            />
+            {uploadedImage.file.type.startsWith('video/') ? (
+              <video
+                src={uploadedImage.url}
+                className='w-full h-full object-contain'
+                controls
+                preload='metadata'
+              />
+            ) : (
+              <Image
+                src={uploadedImage.url}
+                alt={uploadedImage.name}
+                fill
+                className='object-contain'
+                unoptimized
+              />
+            )}
           </div>
 
           {/* <div className='mt-3 text-sm text-gray-300'>
@@ -255,13 +280,27 @@ export function ImageUploadMol({
 
             <div className='space-y-2'>
               <p className='text-white font-medium'>
-                {isProcessing ? '正在处理图片...' : isDragging ? '松开以上传图片' : '点击上传图片'}
+                {isProcessing
+                  ? accept === 'video/*'
+                    ? '正在处理视频...'
+                    : '正在处理文件...'
+                  : isDragging
+                  ? accept === 'video/*'
+                    ? '松开以上传视频'
+                    : '松开以上传文件'
+                  : accept === 'video/*'
+                  ? '点击上传视频'
+                  : '点击上传文件'}
               </p>
               {!isProcessing && (
                 <>
-                  <p className='text-sm text-gray-400'>或将图片拖拽到此处</p>
+                  <p className='text-sm text-gray-400'>
+                    或将{accept === 'video/*' ? '视频' : '文件'}拖拽到此处
+                  </p>
                   <p className='text-xs text-gray-500'>
-                    支持 JPG、PNG、WEBP 格式，最大 {maxSize}MB
+                    {accept === 'video/*'
+                      ? `支持 MP4、AVI、MOV 等格式，最大 ${maxSize}MB`
+                      : `支持 JPG、PNG、WEBP 格式，最大 ${maxSize}MB`}
                   </p>
                 </>
               )}
