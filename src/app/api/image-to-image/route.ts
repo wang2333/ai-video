@@ -84,16 +84,13 @@ async function pollTaskStatus(taskId: string, apiKey: string, maxAttempts = 60, 
 /**
  * 图生图API路由
  */
-export async function POST(
-  request: NextRequest,
-  context?: { env?: { DASHSCOPE_API_KEY?: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
     // 解析请求体
     const params = await request.json();
 
-    // 获取API密钥 - 支持 Cloudflare Pages 环境
-    const apiKey = context?.env?.DASHSCOPE_API_KEY || process.env.DASHSCOPE_API_KEY;
+    // 获取API密钥
+    const apiKey = process.env.DASHSCOPE_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: 'API密钥未配置' }, { status: 500 });
     }
