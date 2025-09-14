@@ -317,6 +317,7 @@ export default function ImageToImage() {
           <div className='flex flex-col flex-1 bg-[#24222D] p-4'>
             <div className='flex justify-end mb-2'>
               <Button
+                disabled={isGenerating}
                 size='sm'
                 variant='outline'
                 onClick={handleDownloadCurrent}
