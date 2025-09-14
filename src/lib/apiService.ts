@@ -13,6 +13,7 @@ export interface GenerateImageToImageParams {
   imageUrl: string; // 参考图片URL
   sieze: string;
   outputCount: number;
+  function?: string; // 模型效果功能
   onProgress?: (status: string) => void; // 进度回调
 }
 
@@ -269,8 +270,7 @@ class ApiService {
       url: params.url,
       model: params.model,
       input: {
-        // function: 'description_edit',
-        function: 'stylization_all',
+        function: params.function || 'stylization_all', // 使用传入的function或默认值
         prompt: params.prompt,
         base_image_url: params.imageUrl
       },

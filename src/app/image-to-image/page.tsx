@@ -26,6 +26,50 @@ const models = [
   }
 ];
 
+// 模型效果功能选项
+const functionOptions = [
+  {
+    value: 'stylization_all',
+    label: '全局风格化'
+  },
+  {
+    value: 'stylization_local',
+    label: '局部风格化'
+  },
+  {
+    value: 'description_edit',
+    label: '指令编辑'
+  },
+  {
+    value: 'description_edit_with_mask',
+    label: '局部重绘'
+  },
+  {
+    value: 'remove_watermark',
+    label: '去文字水印'
+  },
+  {
+    value: 'expand',
+    label: '扩图'
+  },
+  {
+    value: 'super_resolution',
+    label: '图像超分'
+  },
+  {
+    value: 'colorization',
+    label: '图像上色'
+  },
+  {
+    value: 'doodle',
+    label: '线稿生图'
+  },
+  {
+    value: 'control_cartoon_feature',
+    label: '参考卡通形象生图'
+  }
+];
+
 // Mock data for carousel
 const sampleImages = [
   { id: 1, src: '/image/demo1.jpeg' },
@@ -38,6 +82,7 @@ const outputCounts = [1, 2, 3, 4];
 export default function ImageToImage() {
   const [prompt, setPrompt] = useState('');
   const [selectedModel, setSelectedModel] = useState('wanx2.1-imageedit');
+  const [selectedFunction, setSelectedFunction] = useState('stylization_all');
   const [outputCount, setOutputCount] = useState(1);
 
   // 图生图特有状态
@@ -117,6 +162,9 @@ export default function ImageToImage() {
     if (!selectedModel) {
       return '请选择模型';
     }
+    if (!selectedFunction) {
+      return '请选择模型效果功能';
+    }
     if (outputCount < 1 || outputCount > 4) {
       return '输出数量必须在1-4之间';
     }
@@ -155,7 +203,8 @@ export default function ImageToImage() {
         prompt: prompt.trim(),
         imageUrl: uploadedImage.base64,
         sieze: '1024*1024', // 默认尺寸
-        outputCount: outputCount
+        outputCount: outputCount,
+        function: selectedFunction
       });
 
       if (result.success && result.data) {
@@ -228,6 +277,32 @@ export default function ImageToImage() {
                         <p className='text-white'>{option.label}</p>
                         <p className='text-xs text-gray-400'>{option.description}</p>
                       </div>
+                    </div>
+                  )}
+                />
+              </div>
+
+              {/* Function Selection */}
+              <div>
+                <label className='block text-sm text-gray-300 mb-2'>模型效果功能</label>
+                <SelectMol
+                  options={functionOptions}
+                  value={selectedFunction}
+                  onValueChange={setSelectedFunction}
+                  variant='dark'
+                  size='lg'
+                  renderTrigger={selectedOption => {
+                    if (!selectedOption) return null;
+                    const func = selectedOption as SelectOption;
+                    return (
+                      <div className='py-1'>
+                        <p className='text-sm text-white'>{func.label}</p>
+                      </div>
+                    );
+                  }}
+                  renderItem={option => (
+                    <div>
+                      <p className='text-white'>{option.label}</p>
                     </div>
                   )}
                 />
