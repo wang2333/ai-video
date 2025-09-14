@@ -96,6 +96,17 @@ export default function ImageToImage() {
       return '请先上传参考图片';
     }
 
+    // 图片尺寸验证
+    if (uploadedImage.width && uploadedImage.height) {
+      const minSize = 512;
+      const maxSize = 4096;
+      const { width, height } = uploadedImage;
+
+      if (width < minSize || width > maxSize || height < minSize || height > maxSize) {
+        return `图片尺寸必须在${minSize}×${minSize}到${maxSize}×${maxSize}像素之间，当前尺寸：${width}×${height}`;
+      }
+    }
+
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
       return '请输入提示词';

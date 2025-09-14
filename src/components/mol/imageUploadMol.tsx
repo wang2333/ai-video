@@ -13,6 +13,8 @@ export interface UploadedImage {
   base64: string;
   name: string;
   size: number;
+  width?: number; // 图片宽度（仅图片文件有效）
+  height?: number; // 图片高度（仅图片文件有效）
 }
 
 export interface ImageUploadMolProps {
@@ -99,10 +101,41 @@ export function ImageUploadMol({
   };
 
   /**
+   * 获取图片尺寸信息
+   * @param file 图片文件
+   * @returns Promise<{width?: number, height?: number}> 图片尺寸信息
+   */
+  const getImageDimensions = (file: File): Promise<{ width?: number; height?: number }> => {
+    return new Promise(resolve => {
+      // 只对图片文件获取尺寸信息
+      if (!file.type.startsWith('image/')) {
+        resolve({});
+        return;
+      }
+
+      const img = new window.Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(url); // 清理临时URL
+        resolve({ width: img.width, height: img.height });
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url); // 清理临时URL
+        resolve({}); // 获取失败时返回空对象
+      };
+
+      img.src = url;
+    });
+  };
+
+  /**
    * 处理文件上传
    */
   const handleFileUpload = useCallback(
     async (file: File) => {
+      // 1. 基本文件验证（类型、大小）
       const validationError = validateFile(file);
       if (validationError) {
         setError(validationError);
@@ -113,10 +146,13 @@ export function ImageUploadMol({
       setIsProcessing(true);
 
       try {
-        // 创建预览URL
+        // 2. 获取图片尺寸信息（仅图片文件）
+        const dimensions = await getImageDimensions(file);
+
+        // 3. 创建预览URL
         const url = URL.createObjectURL(file);
 
-        // 转换为base64
+        // 4. 转换为base64
         const base64 = await convertFileToBase64(file);
 
         const uploadedImage: UploadedImage = {
@@ -125,12 +161,14 @@ export function ImageUploadMol({
           url,
           base64,
           name: file.name,
-          size: file.size
+          size: file.size,
+          ...dimensions // 包含 width 和 height 信息（如果是图片）
         };
 
         onImageUpload?.(uploadedImage);
-      } catch {
-        setError('图片处理失败，请重试');
+      } catch (error) {
+        console.error('文件处理失败:', error);
+        setError('文件处理失败，请重试');
       } finally {
         setIsProcessing(false);
       }

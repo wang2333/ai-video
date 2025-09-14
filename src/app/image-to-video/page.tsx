@@ -157,6 +157,16 @@ export default function ImageToVideoPage() {
       return '请先上传图片文件';
     }
 
+    // 图片尺寸验证
+    if (uploadedImage.width && uploadedImage.height) {
+      const minSize = 360;
+      const maxSize = 2000;
+      const { width, height } = uploadedImage;
+
+      if (width < minSize || width > maxSize || height < minSize || height > maxSize) {
+        return `图片尺寸必须在${minSize}×${minSize}到${maxSize}×${maxSize}像素之间，当前尺寸：${width}×${height}`;
+      }
+    }
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) {
       return '请输入动作描述';
