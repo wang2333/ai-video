@@ -269,7 +269,8 @@ class ApiService {
       url: params.url,
       model: params.model,
       input: {
-        function: 'description_edit',
+        // function: 'description_edit',
+        function: 'stylization_all',
         prompt: params.prompt,
         base_image_url: params.imageUrl
       },
