@@ -9,12 +9,10 @@ export interface GenerateImageParams {
 export interface GenerateImageToImageParams {
   url: string;
   model: string;
-  prompt: string;
+  prompt?: string;
   imageUrl: string; // 参考图片URL
-  sieze: string;
   outputCount: number;
-  function?: string; // 模型效果功能
-  onProgress?: (status: string) => void; // 进度回调
+  styleIndex?: number; // 风格样式索引
 }
 
 /**
@@ -270,20 +268,18 @@ class ApiService {
       url: params.url,
       model: params.model,
       input: {
-        function: params.function || 'stylization_all', // 使用传入的function或默认值
-        prompt: params.prompt,
-        base_image_url: params.imageUrl
-      },
-      parameters: {
-        n: params.outputCount
+        image_url: params.imageUrl,
+        style_index: params.styleIndex
       }
     };
+    console.log('?? ~ data:', data);
 
     // 发送请求到专门的图生图API路由
     const result = await this.request<WanxImageEditResponse>('/api/image-to-image', {
       method: 'POST',
       body: JSON.stringify(data)
     });
+    console.log('?? ~ result:', result);
 
     if (!result.success) {
       return {
@@ -291,16 +287,12 @@ class ApiService {
         error: result.error
       };
     }
-
     // 处理万相图像编辑模型的响应
-    let images: GeneratedImage[] = [];
-    if (params.model === 'wanx2.1-imageedit') {
-      images =
-        (result.data as WanxImageEditResponse)?.output?.results?.map((result, index) => ({
-          id: Date.now() + index,
-          src: result.url
-        })) || [];
-    }
+    const images =
+      result.data?.output?.results?.map((result, index) => ({
+        id: Date.now() + index,
+        src: result.url
+      })) || [];
 
     return {
       success: true,

@@ -18,52 +18,39 @@ import { generateImageToImage, GeneratedImage } from '@/lib/apiService';
 // Model data - 图生图支持的模型
 const models = [
   {
-    value: 'wanx2.1-imageedit',
+    value: 'wanx-style-repaint-v1',
     label: '通用图像编辑',
     description: '通义万相-通用图像编辑',
     icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis'
+    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/image-generation/generation'
   }
 ];
 
-// 模型效果功能选项
-const functionOptions = [
-  {
-    value: 'stylization_all',
-    label: '全局风格化'
-  },
-  {
-    value: 'stylization_local',
-    label: '局部风格化'
-  },
-  {
-    value: 'description_edit',
-    label: '指令编辑'
-  },
-  {
-    value: 'remove_watermark',
-    label: '去文字水印'
-  },
-  {
-    value: 'expand',
-    label: '扩图'
-  },
-  {
-    value: 'super_resolution',
-    label: '图像超分'
-  },
-  {
-    value: 'colorization',
-    label: '图像上色'
-  },
-  {
-    value: 'doodle',
-    label: '线稿生图'
-  },
-  {
-    value: 'control_cartoon_feature',
-    label: '参考卡通形象生图'
-  }
+// 风格样式选项
+const styleIndexOptions = [
+  { value: '0', label: '复古漫画' },
+  { value: '1', label: '3D童话' },
+  { value: '2', label: '二次元' },
+  { value: '3', label: '小清新' },
+  { value: '4', label: '未来科技' },
+  { value: '5', label: '国画古风' },
+  { value: '6', label: '将军百战' },
+  { value: '7', label: '炫彩卡通' },
+  { value: '8', label: '清雅国风' },
+  { value: '9', label: '喜迎新年' },
+  { value: '14', label: '国风工笔' },
+  { value: '15', label: '恭贺新禧' },
+  { value: '30', label: '童话世界' },
+  { value: '31', label: '黏土世界' },
+  { value: '32', label: '像素世界' },
+  { value: '33', label: '冒险世界' },
+  { value: '34', label: '日漫世界' },
+  { value: '35', label: '3D世界' },
+  { value: '36', label: '二次元世界' },
+  { value: '37', label: '手绘世界' },
+  { value: '38', label: '蜡笔世界' },
+  { value: '39', label: '冰箱贴世界' },
+  { value: '40', label: '吧唧世界' }
 ];
 
 // Mock data for carousel
@@ -76,9 +63,9 @@ const sampleImages = [
 const outputCounts = [1, 2, 3, 4];
 
 export default function ImageToImage() {
-  const [prompt, setPrompt] = useState('');
-  const [selectedModel, setSelectedModel] = useState('wanx2.1-imageedit');
-  const [selectedFunction, setSelectedFunction] = useState('stylization_all');
+  // const [prompt, setPrompt] = useState('');
+  const [selectedModel, setSelectedModel] = useState('wanx-style-repaint-v1');
+  const [selectedStyleIndex, setSelectedStyleIndex] = useState('0');
   const [outputCount, setOutputCount] = useState(1);
 
   // 图生图特有状态
@@ -139,8 +126,8 @@ export default function ImageToImage() {
 
     // 图片尺寸验证
     if (uploadedImage.width && uploadedImage.height) {
-      const minSize = 512;
-      const maxSize = 4096;
+      const minSize = 256;
+      const maxSize = 3240;
       const { width, height } = uploadedImage;
 
       if (width < minSize || width > maxSize || height < minSize || height > maxSize) {
@@ -148,18 +135,18 @@ export default function ImageToImage() {
       }
     }
 
-    const trimmedPrompt = prompt.trim();
-    if (!trimmedPrompt) {
-      return '请输入提示词';
-    }
-    if (trimmedPrompt.length > 2000) {
-      return `提示词长度不能超过2000个字符`;
-    }
+    // const trimmedPrompt = prompt.trim();
+    // if (!trimmedPrompt) {
+    //   return '请输入提示词';
+    // }
+    // if (trimmedPrompt.length > 2000) {
+    //   return `提示词长度不能超过2000个字符`;
+    // }
     if (!selectedModel) {
       return '请选择模型';
     }
-    if (!selectedFunction) {
-      return '请选择模型效果功能';
+    if (!selectedStyleIndex) {
+      return '请选择风格样式';
     }
     if (outputCount < 1 || outputCount > 4) {
       return '输出数量必须在1-4之间';
@@ -196,11 +183,10 @@ export default function ImageToImage() {
       const result = await generateImageToImage({
         url: model.url,
         model: model.value,
-        prompt: prompt.trim(),
+        // prompt: prompt.trim(),
         imageUrl: uploadedImage.base64,
-        sieze: '1024*1024', // 默认尺寸
         outputCount: outputCount,
-        function: selectedFunction
+        styleIndex: parseInt(selectedStyleIndex, 10)
       });
 
       if (result.success && result.data) {
@@ -278,32 +264,6 @@ export default function ImageToImage() {
                 />
               </div>
 
-              {/* Function Selection */}
-              <div>
-                <label className='block text-sm text-gray-300 mb-2'>模型效果功能</label>
-                <SelectMol
-                  options={functionOptions}
-                  value={selectedFunction}
-                  onValueChange={setSelectedFunction}
-                  variant='dark'
-                  size='lg'
-                  renderTrigger={selectedOption => {
-                    if (!selectedOption) return null;
-                    const func = selectedOption as SelectOption;
-                    return (
-                      <div className='py-1'>
-                        <p className='text-sm text-white'>{func.label}</p>
-                      </div>
-                    );
-                  }}
-                  renderItem={option => (
-                    <div>
-                      <p className='text-white'>{option.label}</p>
-                    </div>
-                  )}
-                />
-              </div>
-
               {/* Reference Image Upload */}
               <div>
                 <label className='block text-sm text-gray-300 mb-2'>参考图片</label>
@@ -316,8 +276,34 @@ export default function ImageToImage() {
                 />
               </div>
 
-              {/* Prompt */}
+              {/* Style Index Selection */}
               <div>
+                <label className='block text-sm text-gray-300 mb-2'>风格样式</label>
+                <SelectMol
+                  options={styleIndexOptions}
+                  value={selectedStyleIndex}
+                  onValueChange={setSelectedStyleIndex}
+                  variant='dark'
+                  size='lg'
+                  renderTrigger={selectedOption => {
+                    if (!selectedOption) return null;
+                    const style = selectedOption as SelectOption;
+                    return (
+                      <div className='py-1'>
+                        <p className='text-sm text-white'>{style.label}</p>
+                      </div>
+                    );
+                  }}
+                  renderItem={option => (
+                    <div>
+                      <p className='text-white'>{option.label}</p>
+                    </div>
+                  )}
+                />
+              </div>
+
+              {/* Prompt */}
+              {/* <div>
                 <label className='block text-sm text-gray-300 mb-2'>提示词</label>
                 <div className='relative'>
                   <Textarea
@@ -330,7 +316,7 @@ export default function ImageToImage() {
                     {prompt.length}/{2000}
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Output Count */}
               <div>
@@ -338,6 +324,7 @@ export default function ImageToImage() {
                 <div className='grid grid-cols-4 gap-2'>
                   {outputCounts.map(count => (
                     <Button
+                      disabled={count > 1}
                       key={count}
                       variant={outputCount === count ? 'default' : 'outline'}
                       onClick={() => setOutputCount(count)}
@@ -375,7 +362,7 @@ export default function ImageToImage() {
             <div className='pt-4 border-t border-gray-700'>
               <Button
                 onClick={handleGenerate}
-                disabled={!uploadedImage || prompt.length === 0 || isGenerating}
+                disabled={!uploadedImage || isGenerating}
                 className='w-full h-12 bg-primary hover:bg-primary/90 text-lg'
               >
                 <Sparkles className={cn('w-5 h-5 mr-2', isGenerating && 'animate-spin')} />
