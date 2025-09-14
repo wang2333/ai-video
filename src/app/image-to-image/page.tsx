@@ -41,10 +41,6 @@ const functionOptions = [
     label: '指令编辑'
   },
   {
-    value: 'description_edit_with_mask',
-    label: '局部重绘'
-  },
-  {
     value: 'remove_watermark',
     label: '去文字水印'
   },
