@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Type, ImageIcon, Video, Sparkles } from 'lucide-react';
+import { Type, ImageIcon, Video, Sparkles, Clapperboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Sidebar() {
@@ -12,7 +12,8 @@ export default function Sidebar() {
     { id: 'text-to-image', icon: Type, label: '文生图', href: '/text-to-image' },
     { id: 'image-to-image', icon: ImageIcon, label: '图生图', href: '/image-to-image' },
     { id: 'text-to-video', icon: Video, label: '文生视频', href: '/text-to-video' },
-    { id: 'image-to-video', icon: Sparkles, label: '图生视频', href: '/image-to-video' }
+    { id: 'image-to-video', icon: Sparkles, label: '图生视频', href: '/image-to-video' },
+    { id: 'video-to-video', icon: Clapperboard, label: '视频转视频', href: '/video-to-video' }
   ];
 
   return (

@@ -109,11 +109,22 @@ export interface ImageToVideoParams {
 }
 
 /**
+ * 视频风格转换参数
+ */
+export interface VideoToVideoParams {
+  url: string;
+  model: string;
+  video_url: string; // 原始视频URL
+  style: number; // 风格类型 0-7
+  video_fps: number; // 视频帧率
+}
+
+/**
  * 视频生成API响应
  */
 export interface VideoGenerationResponse {
   output: {
-    video_url: string;
+    output_video_url: string;
     task_id: string;
   };
 }
@@ -272,14 +283,12 @@ class ApiService {
         style_index: params.styleIndex
       }
     };
-    console.log('?? ~ data:', data);
 
     // 发送请求到专门的图生图API路由
     const result = await this.request<WanxImageEditResponse>('/api/image-to-image', {
       method: 'POST',
       body: JSON.stringify(data)
     });
-    console.log('?? ~ result:', result);
 
     if (!result.success) {
       return {
@@ -315,17 +324,16 @@ class ApiService {
         prompt: params.prompt
       },
       parameters: {
+        min_len: 540,
         size: params.resolution,
         duration: params.duration
       }
     };
-    console.log('?? ~ data:', data);
 
     const result = await this.request<VideoGenerationResponse>('/api/generate-video', {
       method: 'POST',
       body: JSON.stringify(data)
     });
-    console.log('?? ~ result:', result);
 
     return result;
   }
@@ -353,6 +361,33 @@ class ApiService {
 
     // 发送请求到图生视频API路由
     const result = await this.request<VideoGenerationResponse>('/api/image-to-video', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+
+    return result;
+  }
+
+  /**
+   * 视频风格转换API调用
+   * @param params 转换参数
+   * @returns Promise<ServiceResult<VideoGenerationResponse>>
+   */
+  async generateVideoToVideo(
+    params: VideoToVideoParams
+  ): Promise<ServiceResult<VideoGenerationResponse>> {
+    const data = {
+      url: params.url,
+      model: params.model,
+      input: {
+        video_url: params.video_url
+      },
+      parameters: {
+        style: params.style,
+        video_fps: params.video_fps
+      }
+    };
+    const result = await this.request<VideoGenerationResponse>('/api/video-to-video', {
       method: 'POST',
       body: JSON.stringify(data)
     });
@@ -471,7 +506,15 @@ export const generateVideo = (params: GenerateVideoParams) => apiService.generat
 /**
  * 图生视频的便捷方法
  * @param params 生成参数
- * @returns Promise<ServiceResult<GeneratedVideo[]>>
+ * @returns Promise<ServiceResult<VideoGenerationResponse>>
  */
 export const generateImageToVideo = (params: ImageToVideoParams) =>
   apiService.generateImageToVideo(params);
+
+/**
+ * 视频风格转换的便捷方法
+ * @param params 转换参数
+ * @returns Promise<ServiceResult<VideoGenerationResponse>>
+ */
+export const generateVideoToVideo = (params: VideoToVideoParams) =>
+  apiService.generateVideoToVideo(params);
