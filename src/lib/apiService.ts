@@ -265,7 +265,7 @@ class ApiService {
     params: GenerateImageToImageParams
   ): Promise<ServiceResult<GeneratedImage[]>> {
     try {
-      const apiUrl = getApiEndpoint('wanx-style-repaint-v1');
+      const apiUrl = getApiEndpoint(params.model);
       const requestParams = {
         model: params.model,
         input: {
@@ -513,7 +513,7 @@ class ApiService {
 
       return {
         success: true,
-        data: pollResult.data as VideoGenerationResponse
+        data: pollResult.data as VideoGenerationResponse2
       };
     } catch (error) {
       return {
