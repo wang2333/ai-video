@@ -21,8 +21,7 @@ const models = [
     value: 'wanx-style-repaint-v1',
     label: '通用图像编辑',
     description: '通义万相-通用图像编辑',
-    icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/image-generation/generation'
+    icon: '/image/Group.svg'
   }
 ];
 
@@ -166,7 +165,7 @@ export default function ImageToImage() {
     }
 
     const model = models.find(model => model.value === selectedModel);
-    if (!model?.url) {
+    if (!model) {
       setError('模型配置错误');
       return;
     }
@@ -181,7 +180,6 @@ export default function ImageToImage() {
 
     try {
       const result = await generateImageToImage({
-        url: model.url,
         model: model.value,
         // prompt: prompt.trim(),
         imageUrl: uploadedImage.base64,

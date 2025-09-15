@@ -47,7 +47,6 @@ const models = [
     label: '通义万相2.1-turbo',
     description: '万相2.1极速版',
     icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
     qualityLevels: ['480P', '720P']
   },
   {
@@ -55,7 +54,6 @@ const models = [
     label: '通义万相2.1-Plus',
     description: '万相2.1专业版',
     icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
     qualityLevels: ['720P']
   },
 
@@ -64,7 +62,6 @@ const models = [
     label: '通义万相2.2-Flash',
     description: '万相2.2极速版',
     icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
     qualityLevels: ['480P', '720P']
   },
   {
@@ -72,7 +69,6 @@ const models = [
     label: '通义万相2.2-Plus',
     description: '万相2.2专业版',
     icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
     qualityLevels: ['480P', '1080P']
   }
 ];
@@ -195,7 +191,7 @@ export default function ImageToVideoPage() {
     }
 
     const model = models.find(model => model.value === selectedModel);
-    if (!model?.url) {
+    if (!model) {
       setError('模型配置错误');
       return;
     }
@@ -211,7 +207,6 @@ export default function ImageToVideoPage() {
     try {
       // 使用抽取的API服务方法
       const result = await generateImageToVideo({
-        url: model.url,
         model: model.value,
         prompt: prompt.trim(),
         imageUrl: uploadedImage.base64,

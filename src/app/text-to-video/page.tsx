@@ -46,7 +46,6 @@ const models = [
     label: '通义万相2.1-turbo',
     description: '万相2.1极速版',
     icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
     qualityLevels: ['480P', '720P']
   },
   {
@@ -54,7 +53,6 @@ const models = [
     label: '通义万相2.1-Plus',
     description: '万相2.1专业版',
     icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
     qualityLevels: ['720P']
   },
   {
@@ -62,7 +60,6 @@ const models = [
     label: '通义万相2.2-Plus',
     description: '万相2.2专业版',
     icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
     qualityLevels: ['480P', '1080P']
   }
 ];
@@ -206,7 +203,6 @@ export default function TextToVideoPage() {
 
     try {
       const result = await generateVideo({
-        url: models.find(m => m.value === selectedModel)?.url || '',
         model: selectedModel,
         prompt: prompt.trim(),
         resolution: getResolution(),

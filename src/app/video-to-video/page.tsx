@@ -76,8 +76,7 @@ const MODEL_OPTIONS = [
     value: 'video-style-transform',
     label: '通义万相',
     description: '视频风格重绘',
-    icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis'
+    icon: '/image/Group.svg'
   }
 ];
 
@@ -265,7 +264,6 @@ export default function VideoToVideoPage() {
     try {
       // 调用视频风格转换API
       const result = await generateVideoToVideo({
-        url: MODEL_OPTIONS.find(m => m.value === selectedModel)?.url || '',
         model: selectedModel,
         video_url: uploadedVideo!.uploadUrl || '',
         style: selectedStyle,

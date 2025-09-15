@@ -30,15 +30,19 @@ const models = [
     value: 'qwen-image',
     label: '通义千问-Image',
     description: '通义千问-Image-Edit',
-    icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation'
+    icon: '/image/Group.svg'
   },
   {
     value: 'wan2.2-t2i-flash',
-    label: 'Wan2.2',
+    label: 'Wan2.2-Flash',
     description: '通义万相文生图2.2',
-    icon: '/image/Group.svg',
-    url: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis'
+    icon: '/image/Group.svg'
+  },
+  {
+    value: 'wan2.2-t2i-plus',
+    label: 'Wan2.2-Plus',
+    description: '通义万相文生图2.2',
+    icon: '/image/Group.svg'
   },
   {
     value: 'Hunyuan',
@@ -232,7 +236,7 @@ export default function TextToImagePage() {
     }
 
     const model = models.find(model => model.value === selectedModel);
-    if (!model?.url) {
+    if (!model) {
       setError('模型配置错误');
       return;
     }
@@ -247,7 +251,6 @@ export default function TextToImagePage() {
       }
 
       const result = await generateImage({
-        url: model.url,
         model: model.value,
         prompt: enhancedPrompt,
         sieze: SIZE_MAP[aspectRatio],
