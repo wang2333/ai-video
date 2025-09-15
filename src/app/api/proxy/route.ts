@@ -1,7 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-
-// 配置 Edge Runtime 以支持 Cloudflare Pages
 export const runtime = 'edge';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * 通用API代理路由
