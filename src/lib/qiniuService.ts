@@ -200,7 +200,8 @@ class QiniuService {
         this.mac = new qiniuSDK.auth.digest.Mac(this.config.accessKey, this.config.secretKey);
       }
 
-      const bucketManager = new qiniuSDK.rs.BucketManager(this.mac, this.getQiniuConfig(qiniuSDK));
+      // const bucketManager = new qiniuSDK.rs.BucketManager(this.mac, this.getQiniuConfig(qiniuSDK));
+      const bucketManager = new qiniuSDK.rs.BucketManager(this.mac);
 
       return new Promise(resolve => {
         bucketManager.delete(this.config.bucket, key, (err, respBody, respInfo) => {

@@ -151,27 +151,27 @@ export function useVideoUpload(options: UseVideoUploadOptions = {}): UseVideoUpl
       };
 
       // 配置区域
-      const getQiniuRegion = (zoneCode: string) => {
-        switch (zoneCode) {
-          case 'z0':
-            return qiniu.region.z0;
-          case 'z1':
-            return qiniu.region.z1;
-          case 'z2':
-            return qiniu.region.z2;
-          case 'na0':
-            return qiniu.region.na0;
-          case 'as0':
-            return qiniu.region.as0;
-          default:
-            return qiniu.region.z2;
-        }
-      };
+      // const getQiniuRegion = (zoneCode: string) => {
+      //   switch (zoneCode) {
+      //     case 'z0':
+      //       return qiniu.region.z0;
+      //     case 'z1':
+      //       return qiniu.region.z1;
+      //     case 'z2':
+      //       return qiniu.region.z2;
+      //     case 'na0':
+      //       return qiniu.region.na0;
+      //     case 'as0':
+      //       return qiniu.region.as0;
+      //     default:
+      //       return qiniu.region.z2;
+      //   }
+      // };
 
       const config = {
-        useCdnDomain: true,
+        useCdnDomain: true
         // region: getQiniuRegion(zone || 'z2')
-        region: 'z2'
+        // region: 'z2'
       };
 
       // 执行上传
