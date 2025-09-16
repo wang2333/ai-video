@@ -126,7 +126,8 @@ export function useVideoUpload(options: UseVideoUploadOptions = {}): UseVideoUpl
       baseUrl = domain;
     } else {
       // 根据当前站点协议选择协议，避免线上 HTTPS 下的混合内容
-      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      // const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      const isHttps = false;
       baseUrl = `${isHttps ? 'https' : 'http'}://${domain}`;
     }
 
