@@ -1,0 +1,13 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/api/qiniu/token/route": "/api/qiniu/token",
+  "/image-to-image/page": "/image-to-image",
+  "/page": "/",
+  "/image-to-video/page": "/image-to-video",
+  "/text-to-image/page": "/text-to-image",
+  "/video-to-video/page": "/video-to-video",
+  "/text-to-video/page": "/text-to-video",
+  "/api/proxy/route": "/api/proxy",
+  "/api/upload/route": "/api/upload"
+}
