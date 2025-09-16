@@ -46,23 +46,12 @@ export function VideoPlayer({
   onPlay,
   onPause,
   onError,
-  onReady,
+  onReady
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const flvPlayerRef = useRef<any>(null);
   const [hasError, setHasError] = useState(false);
   const isFlv = useMemo(() => shouldUseFlv(src), [src]);
-
-  const toProxied = (url: string) => {
-    try {
-      const u = new URL(url, typeof window !== 'undefined' ? window.location.href : 'http://localhost');
-      const host = u.hostname.toLowerCase();
-      const needsProxy = host.includes('clouddn.com') || host.includes('qiniudn.com');
-      return needsProxy ? `/api/video-proxy?url=${encodeURIComponent(u.toString())}` : url;
-    } catch {
-      return url;
-    }
-  };
 
   useEffect(() => {
     const video = videoRef.current;
@@ -99,15 +88,14 @@ export function VideoPlayer({
     video.addEventListener('error', onErrorEvt);
 
     const useFlv = isFlv && flvjs && flvjs.isSupported?.();
-    const effectiveSrc = toProxied(src);
 
     if (useFlv) {
       try {
-        const mediaDataSource = { type: 'flv', url: effectiveSrc };
+        const mediaDataSource = { type: 'flv', url: src };
         const flvConfig = {
           enableStashBuffer: true,
           isLive: false,
-          cors: true,
+          cors: true
         };
         const player = flvjs.createPlayer(mediaDataSource, flvConfig);
         player.attachMediaElement(video);
@@ -118,6 +106,7 @@ export function VideoPlayer({
           });
 
         player.on(flvjs.Events.ERROR, (type: any, detail: any) => {
+          console.log('?? ~ detail:', detail);
           setHasError(true);
           onError?.({ type, detail });
         });
@@ -131,7 +120,7 @@ export function VideoPlayer({
     } else {
       // 原生播放 (mp4 等)
       try {
-        video.src = effectiveSrc;
+        video.src = src;
         if (autoPlay)
           video.play().catch((err: any) => {
             console.warn('video autoplay blocked:', err);
