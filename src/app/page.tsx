@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Header from '@/components/Header';
-import { Type, ImageIcon, Sparkles, Wand2, ArrowRight, Star, Video, Film } from 'lucide-react';
+import { Type, ImageIcon, Sparkles, Wand2, Star, Video, Film } from 'lucide-react';
 import Image from 'next/image';
 
 export default function Home() {
@@ -24,13 +24,13 @@ export default function Home() {
             </div>
             <h1 className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6'>
               AI 驱动的
-              <span className='text-transparent bg-clip-text bg-gradient-to-r from-[#FF3466] to-[#FF6B8A]'>
+              <span className='mx-2 text-transparent bg-clip-text bg-gradient-to-r from-[#FF3466] to-[#FF6B8A]'>
                 视觉创作
               </span>
               新时代
             </h1>
             <p className='text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-8 sm:mb-12'>
-              从文字到图片，从图片到视频。体验最先进的AI技术，让每一个创意想法都能瞬间变为精美的视觉作品。
+              从文字到图片，从图片到视频。体验前沿 AI，让每个创意都能即刻化为精美的视觉作品。
             </p>
 
             {/* CTA Buttons */}
@@ -82,19 +82,14 @@ export default function Home() {
                 </div>
                 <h3 className='text-lg font-bold text-white mb-3'>文字生成图片</h3>
                 <p className='text-gray-300 mb-4 leading-relaxed text-sm'>
-                  只需输入文字描述，AI 即可创作出令人惊艳的图片。支持多种艺术风格。
+                  输入文字描述，AI 即刻绘制高质量图像，支持多种艺术风格与细节控制。
                 </p>
                 <ul className='text-xs text-gray-400 space-y-1 mb-4'>
-                  <li>• 智能理解自然语言</li>
-                  <li>• 多种艺术风格</li>
-                  <li>• 高质量输出</li>
+                  <li>• 支持风格、光影、细节权重</li>
+                  <li>• 高清输出，适配社媒与印刷</li>
                 </ul>
-                <Link
-                  href='/text-to-image'
-                  className='text-[#FF3466] hover:text-[#FF6B8A] font-semibold flex items-center space-x-1 text-sm transition-transform'
-                >
+                <Link href='/text-to-image' className='text-[#FF3466] hover:text-[#FF6B8A] font-semibold flex items-center space-x-1 text-sm transition-transform'>
                   <span>立即体验</span>
-                  <ArrowRight className='w-3 h-3' />
                 </Link>
               </div>
 
@@ -103,21 +98,16 @@ export default function Home() {
                 <div className='w-14 h-14 bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform'>
                   <ImageIcon className='w-7 h-7 text-white' />
                 </div>
-                <h3 className='text-lg font-bold text-white mb-3'>图片风格转换</h3>
+                <h3 className='text-lg font-bold text-white mb-3'>图片生成图片</h3>
                 <p className='text-gray-300 mb-4 leading-relaxed text-sm'>
-                  上传图片，使用 AI 技术进行风格转换、增强或重新创作。
+                  上传参考图，智能重绘、扩图或风格化，保持主体一致性与高细节表现。
                 </p>
                 <ul className='text-xs text-gray-400 space-y-1 mb-4'>
-                  <li>• 多种风格转换</li>
-                  <li>• 精细化参数控制</li>
-                  <li>• 保持原图构图</li>
+                  <li>• 支持遮罩编辑与局部修复</li>
+                  <li>• 一键风格迁移与构图优化</li>
                 </ul>
-                <Link
-                  href='/image-to-image'
-                  className='text-[#6366F1] hover:text-[#8B5CF6] font-semibold flex items-center space-x-1 text-sm transition-transform'
-                >
+                <Link href='/image-to-image' className='text-[#6366F1] hover:text-[#8B5CF6] font-semibold flex items-center space-x-1 text-sm transition-transform'>
                   <span>立即体验</span>
-                  <ArrowRight className='w-3 h-3' />
                 </Link>
               </div>
 
@@ -128,19 +118,14 @@ export default function Home() {
                 </div>
                 <h3 className='text-lg font-bold text-white mb-3'>文字生成视频</h3>
                 <p className='text-gray-300 mb-4 leading-relaxed text-sm'>
-                  通过文字描述生成动态视频，让静态想象变为生动的视觉故事。
+                  一句话生成动态短片，支持镜头语言、运动轨迹与光效控制，效果自然流畅。
                 </p>
                 <ul className='text-xs text-gray-400 space-y-1 mb-4'>
-                  <li>• 智能视频生成</li>
-                  <li>• 多种分辨率选择</li>
-                  <li>• 流畅动画效果</li>
+                  <li>• 自动补帧与运动稳定</li>
+                  <li>• 支持多分辨率与时长</li>
                 </ul>
-                <Link
-                  href='/text-to-video'
-                  className='text-[#10B981] hover:text-[#34D399] font-semibold flex items-center space-x-1 text-sm transition-transform'
-                >
+                <Link href='/text-to-video' className='text-[#10B981] hover:text-[#34D399] font-semibold flex items-center space-x-1 text-sm transition-transform'>
                   <span>立即体验</span>
-                  <ArrowRight className='w-3 h-3' />
                 </Link>
               </div>
 
@@ -151,42 +136,35 @@ export default function Home() {
                 </div>
                 <h3 className='text-lg font-bold text-white mb-3'>图片生成视频</h3>
                 <p className='text-gray-300 mb-4 leading-relaxed text-sm'>
-                  将静态图片转换为动态视频，为您的图片注入生命力。
+                  由静态图片自动生成连贯视频，画面稳定、细节清晰，适合故事板与开场引导。
                 </p>
                 <ul className='text-xs text-gray-400 space-y-1 mb-4'>
-                  <li>• 图片动画化</li>
-                  <li>• 自然过渡效果</li>
-                  <li>• 多样化动作</li>
+                  <li>• 支持多镜头串联与转场</li>
+                  <li>• 一键导出主流视频格式</li>
                 </ul>
-                <Link
-                  href='/image-to-video'
-                  className='text-[#F59E0B] hover:text-[#FBBF24] font-semibold flex items-center space-x-1 text-sm transition-transform'
-                >
+                <Link href='/image-to-video' className='text-[#F59E0B] hover:text-[#FBBF24] font-semibold flex items-center space-x-1 text-sm transition-transform'>
                   <span>立即体验</span>
-                  <ArrowRight className='w-3 h-3' />
                 </Link>
               </div>
             </div>
           </div>
 
-          {/* Features Section */}
-          <div className='py-12 sm:py-16 lg:py-20 bg-[#1A1825]/50 rounded-3xl mb-12 sm:mb-16 lg:mb-20 border border-[#4a4a54]/30'>
-            <div className='text-center mb-12 sm:mb-16'>
-              <h2 className='text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4'>
-                为什么选择我们的 AI 平台
-              </h2>
+          {/* Why Us */}
+          <div className='py-12 sm:py-16 lg:py-20'>
+            <div className='text-center mb-12'>
+              <h2 className='text-2xl sm:text-3xl font-bold text-white mb-4'>为什么选择我们的 AI 平台</h2>
               <p className='text-lg text-gray-300 max-w-2xl mx-auto'>
-                基于最先进的人工智能技术，为您提供专业级的图像和视频生成体验
+                结合强大的生成模型与易用的交互设计，为你提供高质量的图片与视频创作体验。
               </p>
             </div>
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8'>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
               <div className='text-center'>
                 <div className='w-20 h-20 bg-gradient-to-r from-[#FF3466] to-[#FF6B8A] rounded-2xl flex items-center justify-center mx-auto mb-6'>
                   <Sparkles className='w-10 h-10 text-white' />
                 </div>
                 <h3 className='text-xl font-bold text-white mb-4'>先进 AI 技术</h3>
                 <p className='text-gray-300 leading-relaxed'>
-                  采用最新的深度学习模型，确保生成的图片和视频质量都达到专业标准
+                  采用最新深度学习模型，图像与视频生成效果细腻自然，质量稳定可控。
                 </p>
               </div>
               <div className='text-center'>
@@ -195,7 +173,7 @@ export default function Home() {
                 </div>
                 <h3 className='text-xl font-bold text-white mb-4'>简单易用</h3>
                 <p className='text-gray-300 leading-relaxed'>
-                  直观的用户界面设计，无需专业技能，任何人都能轻松创作出令人印象深刻的视觉作品
+                  直观界面与贴心预设，无需专业技能即可快速上手，专注创意表达。
                 </p>
               </div>
               <div className='text-center'>
@@ -204,7 +182,7 @@ export default function Home() {
                 </div>
                 <h3 className='text-xl font-bold text-white mb-4'>高质量输出</h3>
                 <p className='text-gray-300 leading-relaxed'>
-                  支持多种分辨率和格式输出，满足从社交媒体到专业印刷的各种使用需求
+                  多分辨率与格式可选，覆盖社交媒体、商业宣传与专业印刷等应用场景。
                 </p>
               </div>
             </div>
@@ -214,7 +192,7 @@ export default function Home() {
           <div className='py-12 sm:py-16 lg:py-20'>
             <div className='text-center mb-12'>
               <h2 className='text-2xl sm:text-3xl font-bold text-white mb-4'>探索无限创意可能</h2>
-              <p className='text-lg text-gray-300'>查看其他用户的精彩作品，获取创作灵感</p>
+              <p className='text-lg text-gray-300'>查看用户精彩作品，获取灵感与思路</p>
             </div>
             <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4'>
               {/* 使用真实的示例图片 */}
@@ -278,3 +256,4 @@ export default function Home() {
     </div>
   );
 }
+
