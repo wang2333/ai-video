@@ -1,0 +1,13 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/api/proxy/route": "app/api/proxy/route.js",
+  "/api/qiniu/token/route": "app/api/qiniu/token/route.js",
+  "/image-to-video/page": "app/image-to-video/page.js",
+  "/image-to-image/page": "app/image-to-image/page.js",
+  "/text-to-image/page": "app/text-to-image/page.js",
+  "/video-to-video/page": "app/video-to-video/page.js",
+  "/page": "app/page.js",
+  "/text-to-video/page": "app/text-to-video/page.js",
+  "/api/upload/route": "app/api/upload/route.js"
+}
