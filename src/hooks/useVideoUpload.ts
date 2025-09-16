@@ -1,5 +1,7 @@
 import { useState, useCallback } from 'react';
-import * as qiniu from 'qiniu-js';
+
+// 动态导入七牛云客户端SDK，避免SSR问题
+let qiniuClient: any = null;
 
 export interface UploadProgress {
   loaded: number;
@@ -136,10 +138,29 @@ export function useVideoUpload(options: UseVideoUploadOptions = {}): UseVideoUpl
   }, []);
 
   /**
+   * 动态加载七牛云客户端SDK
+   */
+  const loadQiniuClient = useCallback(async () => {
+    if (qiniuClient) {
+      return qiniuClient;
+    }
+
+    try {
+      qiniuClient = await import('qiniu-js');
+      return qiniuClient;
+    } catch (error) {
+      throw new Error('七牛云SDK加载失败，请检查网络连接');
+    }
+  }, []);
+
+  /**
    * 上传到七牛云
    */
   const uploadToQiniu = useCallback(
     async (file: File): Promise<string> => {
+      // 动态加载七牛云SDK
+      const qiniu = await loadQiniuClient();
+
       // 获取上传凭证
       const tokenData = await getUploadToken();
       const { token, key, domain, zone } = tokenData;
@@ -150,62 +171,71 @@ export function useVideoUpload(options: UseVideoUploadOptions = {}): UseVideoUpl
         params: { 'x:name': file.name }
       };
 
-      // 配置区域
-      // const getQiniuRegion = (zoneCode: string) => {
-      //   switch (zoneCode) {
-      //     case 'z0':
-      //       return qiniu.region.z0;
-      //     case 'z1':
-      //       return qiniu.region.z1;
-      //     case 'z2':
-      //       return qiniu.region.z2;
-      //     case 'na0':
-      //       return qiniu.region.na0;
-      //     case 'as0':
-      //       return qiniu.region.as0;
-      //     default:
-      //       return qiniu.region.z2;
-      //   }
-      // };
+      // 配置区域映射
+      const getQiniuRegion = (zoneCode: string) => {
+        if (!qiniu.region) {
+          return undefined; // 如果没有region配置，使用默认
+        }
+
+        switch (zoneCode) {
+          case 'z0':
+            return qiniu.region.z0;
+          case 'z1':
+            return qiniu.region.z1;
+          case 'z2':
+            return qiniu.region.z2;
+          case 'na0':
+            return qiniu.region.na0;
+          case 'as0':
+            return qiniu.region.as0;
+          default:
+            return qiniu.region.z2;
+        }
+      };
 
       const config = {
-        useCdnDomain: true
-        // region: getQiniuRegion(zone || 'z2')
-        // region: 'z2'
+        useCdnDomain: true,
+        region: getQiniuRegion(zone || 'z2')
       };
 
       // 执行上传
       return new Promise((resolve, reject) => {
-        const observable = qiniu.upload(file, key, token, putExtra, config);
+        try {
+          const observable = qiniu.upload(file, key, token, putExtra, config);
 
-        observable.subscribe({
-          next: result => {
-            if (result.total) {
-              const progress: UploadProgress = {
-                loaded: result.total.loaded,
-                total: result.total.size,
-                percent: Math.round((result.total.loaded / result.total.size) * 100)
-              };
-              setUploadProgress(progress);
-              options.onProgress?.(progress);
+          observable.subscribe({
+            next: (result: any) => {
+              if (result.total) {
+                const progress: UploadProgress = {
+                  loaded: result.total.loaded,
+                  total: result.total.size,
+                  percent: Math.round((result.total.loaded / result.total.size) * 100)
+                };
+                setUploadProgress(progress);
+                options.onProgress?.(progress);
+              }
+            },
+            error: (error: any) => {
+              const errorMessage = error?.message || error?.err || '上传失败';
+              reject(new Error(errorMessage));
+            },
+            complete: (result: any) => {
+              try {
+                const fileUrl = buildFileUrl(domain, result.key);
+                resolve(fileUrl);
+              } catch (error) {
+                reject(error);
+              }
             }
-          },
-          error: (error: any) => {
-            const errorMessage = error?.message || error?.err || '上传失败';
-            reject(new Error(errorMessage));
-          },
-          complete: result => {
-            try {
-              const fileUrl = buildFileUrl(domain, result.key);
-              resolve(fileUrl);
-            } catch (error) {
-              reject(error);
-            }
-          }
-        });
+          });
+        } catch (error) {
+          reject(
+            new Error(`上传初始化失败: ${error instanceof Error ? error.message : '未知错误'}`)
+          );
+        }
       });
     },
-    [getUploadToken, buildFileUrl, options]
+    [loadQiniuClient, getUploadToken, buildFileUrl, options]
   );
 
   /**

@@ -200,8 +200,7 @@ class QiniuService {
         this.mac = new qiniuSDK.auth.digest.Mac(this.config.accessKey, this.config.secretKey);
       }
 
-      // const bucketManager = new qiniuSDK.rs.BucketManager(this.mac, this.getQiniuConfig(qiniuSDK));
-      const bucketManager = new qiniuSDK.rs.BucketManager(this.mac);
+      const bucketManager = new qiniuSDK.rs.BucketManager(this.mac, this.getQiniuConfig(qiniuSDK));
 
       return new Promise(resolve => {
         bucketManager.delete(this.config.bucket, key, (err, respBody, respInfo) => {
@@ -237,32 +236,22 @@ class QiniuService {
   private getQiniuConfig(qiniuSDK: any): any {
     const config = new qiniuSDK.conf.Config();
 
-    // 安全地设置存储区域，添加错误处理
-    try {
-      if (qiniuSDK.zone && typeof qiniuSDK.zone === 'object') {
-        switch (this.config.zone) {
-          case 'z1':
-            config.zone = qiniuSDK.zone.Zone_z1;
-            break;
-          case 'z2':
-            config.zone = qiniuSDK.zone.Zone_z2;
-            break;
-          case 'na0':
-            config.zone = qiniuSDK.zone.Zone_na0;
-            break;
-          case 'as0':
-            config.zone = qiniuSDK.zone.Zone_as0;
-            break;
-          default:
-            config.zone = qiniuSDK.zone.Zone_z0;
-        }
-      } else {
-        console.warn('七牛云SDK zone对象未找到，使用默认配置');
-        // 如果zone对象不可用，保持默认配置
-      }
-    } catch (error) {
-      console.warn('设置七牛云存储区域失败，使用默认配置:', error);
-      // 发生错误时使用默认配置，不影响上传功能
+    // 设置存储区域
+    switch (this.config.zone) {
+      case 'z1':
+        config.zone = qiniuSDK.zone.Zone_z1;
+        break;
+      case 'z2':
+        config.zone = qiniuSDK.zone.Zone_z2;
+        break;
+      case 'na0':
+        config.zone = qiniuSDK.zone.Zone_na0;
+        break;
+      case 'as0':
+        config.zone = qiniuSDK.zone.Zone_as0;
+        break;
+      default:
+        config.zone = qiniuSDK.zone.Zone_z0;
     }
 
     return config;
