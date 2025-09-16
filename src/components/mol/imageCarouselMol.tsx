@@ -65,7 +65,7 @@ export function ImageCarouselMol({ images, className, onCurrentChange }: ImageCa
         opts={{
           loop: true
         }}
-        className='w-full h-full-carousel'
+        className='w-full h-full h-full-carousel'
       >
         <CarouselContent className='h-full'>
           {images.map(image => (
