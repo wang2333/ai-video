@@ -170,7 +170,8 @@ export function useVideoUpload(options: UseVideoUploadOptions = {}): UseVideoUpl
 
       const config = {
         useCdnDomain: true,
-        region: getQiniuRegion(zone || 'z2')
+        // region: getQiniuRegion(zone || 'z2')
+        region: 'z2'
       };
 
       // 执行上传
