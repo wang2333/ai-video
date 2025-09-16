@@ -125,13 +125,9 @@ export function useVideoUpload(options: UseVideoUploadOptions = {}): UseVideoUpl
     if (domain.startsWith('http')) {
       baseUrl = domain;
     } else {
-      // 检测七牛云测试域名，使用HTTP协议
-      const isTestDomain =
-        domain.includes('clouddn.com') ||
-        domain.includes('qiniudn.com') ||
-        domain.includes('bkt.clouddn.com');
-
-      baseUrl = isTestDomain ? `http://${domain}` : `https://${domain}`;
+      // 根据当前站点协议选择协议，避免线上 HTTPS 下的混合内容
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      baseUrl = `${isHttps ? 'https' : 'http'}://${domain}`;
     }
 
     return `${baseUrl}/${key}`;

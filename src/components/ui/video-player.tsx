@@ -140,6 +140,7 @@ export function VideoPlayer({
         controls={controls}
         loop={loop}
         muted={muted}
+        crossOrigin='anonymous'
         playsInline
       />
 
