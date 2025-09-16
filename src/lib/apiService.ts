@@ -501,7 +501,7 @@ class ApiService {
       }
 
       // 轮询任务状态
-      const pollResult = await pollTaskStatus(taskId);
+      const pollResult = await pollTaskStatus(taskId, 100, 10);
 
       if (!pollResult.success) {
         return {
