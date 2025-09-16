@@ -14,6 +14,7 @@ import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { ImageUploadMol, UploadedImage } from '@/components/mol/imageUploadMol';
 import { downloadCurrentVideo } from '@/lib/downloadUtils';
 import { GeneratedVideo, generateImageToVideo } from '@/lib/apiService';
+import { useGenerateTimer } from '@/hooks/useGenerateTimer';
 
 /**
  * 视频分辨率配置 - 包含480P、720P和1080P
@@ -90,6 +91,9 @@ export default function ImageToVideoPage() {
   ]);
   const [error, setError] = useState<string | null>(null);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+
+  // 计时器Hook
+  const { formattedDuration, start: startTimer, stop: stopTimer } = useGenerateTimer();
 
   // 根据当前选择的模型获取可用的画质选项
   const getAvailableQualityLevels = useCallback(() => {
@@ -201,7 +205,9 @@ export default function ImageToVideoPage() {
       return;
     }
 
+    // 开始计时和生成状态
     setIsGenerating(true);
+    startTimer();
     setError(null);
 
     try {
@@ -229,7 +235,9 @@ export default function ImageToVideoPage() {
       const errorMessage = err instanceof Error ? err.message : '图生视频时发生未知错误';
       setError(errorMessage);
     } finally {
+      // 停止计时和生成状态
       setIsGenerating(false);
+      stopTimer();
     }
   };
 
@@ -423,7 +431,7 @@ export default function ImageToVideoPage() {
                 className='w-full h-12 bg-primary hover:bg-primary/90 text-lg'
               >
                 <Sparkles className={cn('w-5 h-5 mr-2', isGenerating && 'animate-spin')} />
-                {isGenerating ? '生成中...' : '生成视频'}
+                {isGenerating ? `生成中... ${formattedDuration}` : '生成视频'}
               </Button>
             </div>
           </div>

@@ -13,6 +13,7 @@ import { SelectMol, type SelectOption } from '@/components/mol/SelectMol';
 import { VideoCarouselMol } from '@/components/mol/videoCarouselMol';
 import { generateVideo, type GeneratedVideo } from '@/lib/apiService';
 import { downloadCurrentVideo } from '@/lib/downloadUtils';
+import { useGenerateTimer } from '@/hooks/useGenerateTimer';
 
 /**
  * 视频分辨率配置 - 包含480P、720P和1080P
@@ -114,6 +115,9 @@ export default function TextToVideoPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
 
+  // 计时器Hook
+  const { formattedDuration, start: startTimer, stop: stopTimer } = useGenerateTimer();
+
   useEffect(() => {
     setExamples(getRandomExamples(4));
   }, []);
@@ -198,7 +202,10 @@ export default function TextToVideoPage() {
       setError(validationError);
       return;
     }
+
+    // 开始计时和生成状态
     setIsGenerating(true);
+    startTimer();
     setError(null);
 
     try {
@@ -218,15 +225,16 @@ export default function TextToVideoPage() {
           }
         ]);
         setCurrentVideoIndex(0);
-        setIsGenerating(false);
       } else {
         setError(result.error || '提交视频生成任务失败');
-        setIsGenerating(false);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '生成视频时发生未知错误';
       setError(errorMessage);
+    } finally {
+      // 停止计时和生成状态
       setIsGenerating(false);
+      stopTimer();
     }
   };
 
@@ -456,7 +464,7 @@ export default function TextToVideoPage() {
                 className='w-full h-12 bg-primary hover:bg-primary/90 text-lg'
               >
                 <Sparkles className={cn('w-5 h-5 mr-2', isGenerating && 'animate-spin')} />
-                {isGenerating ? '生成中...' : '生成视频'}
+                {isGenerating ? `生成中... ${formattedDuration}` : '生成视频'}
               </Button>
             </div>
           </div>

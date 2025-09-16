@@ -1,136 +1,64 @@
 'use client';
 
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState } from 'react';
 import { Upload, X, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-export interface UploadedVideo {
+export interface VideoFile {
   id: string;
   file: File;
-  url: string;
+  url: string; // 本地预览URL
   name: string;
   size: number;
-  duration?: number; // 视频时长（秒）
-  width?: number; // 视频宽度
-  height?: number; // 视频高度
-  uploadUrl?: string; // 上传后的服务器URL
+  duration?: number;
+  width?: number;
+  height?: number;
+  uploadUrl?: string; // 七牛云URL
 }
 
 export interface VideoUploadMolProps {
-  onVideoUpload?: (video: UploadedVideo) => void;
+  onFileSelect?: (file: File) => void;
   onVideoRemove?: () => void;
   className?: string;
-  uploadedVideo?: UploadedVideo | null;
+  uploadedVideo?: VideoFile | null;
   disabled?: boolean;
+  error?: string | null;
+  isUploading?: boolean;
+  uploadProgress?: { percent: number } | null;
 }
 
 /**
- * 视频上传组件
- * 支持拖拽上传和点击上传，包含完整的视频文件校验
+ * 视频上传组件 (纯UI组件)
+ * 只负责文件选择、拖拽和视频显示，上传逻辑在页面中处理
  */
 export function VideoUploadMol({
-  onVideoUpload,
+  onFileSelect,
   onVideoRemove,
   className = '',
   uploadedVideo = null,
-  disabled = false
+  disabled = false,
+  error = null,
+  isUploading = false,
+  uploadProgress = null
 }: VideoUploadMolProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  /**
-   * 验证文件基本信息
-   */
-  const validateFileBasics = useCallback((file: File): string | null => {
-    // 检查文件类型
-    if (!file.type.startsWith('video/')) {
-      return '请上传视频文件';
-    }
-
-    return null;
-  }, []);
-
-  /**
-   * 获取视频元数据（尺寸、时长等）
-   */
-  const getVideoMetadata = (
-    file: File
-  ): Promise<{ width: number; height: number; duration: number }> => {
-    return new Promise((resolve, reject) => {
-      const video = document.createElement('video');
-      const url = URL.createObjectURL(file);
-
-      video.onloadedmetadata = () => {
-        URL.revokeObjectURL(url);
-        resolve({
-          width: video.videoWidth,
-          height: video.videoHeight,
-          duration: video.duration
-        });
-      };
-
-      video.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error('无法读取视频信息'));
-      };
-
-      video.src = url;
-    });
-  };
-
-  /**
-   * 处理文件选择（不包含上传）
-   */
-  const handleFileUpload = useCallback(
-    async (file: File) => {
-      // 1. 基本文件验证
-      const basicValidationError = validateFileBasics(file);
-      if (basicValidationError) {
-        setError(basicValidationError);
-        return;
-      }
-
-      setError(null);
-      setIsProcessing(true);
-
-      try {
-        // 2. 获取视频元数据
-        const metadata = await getVideoMetadata(file);
-
-        // 3. 创建预览URL
-        const url = URL.createObjectURL(file);
-
-        const uploadedVideo: UploadedVideo = {
-          id: Date.now().toString(),
-          file,
-          url,
-          name: file.name,
-          size: file.size,
-          duration: metadata.duration,
-          width: metadata.width,
-          height: metadata.height
-        };
-
-        onVideoUpload?.(uploadedVideo);
-      } catch (error) {
-        setError(error instanceof Error ? error.message : '视频处理失败，请重试');
-      } finally {
-        setIsProcessing(false);
-      }
-    },
-    [validateFileBasics, onVideoUpload]
-  );
 
   /**
    * 处理文件选择
    */
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (file: File) => {
+    onFileSelect?.(file);
+  };
+
+  /**
+   * 处理文件输入变化
+   */
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      handleFileUpload(files[0]);
+      handleFileSelect(files[0]);
     }
     // 重置文件输入，确保相同文件可以重新选择
     event.target.value = '';
@@ -141,7 +69,7 @@ export function VideoUploadMol({
    */
   const handleDragOver = (event: React.DragEvent) => {
     event.preventDefault();
-    if (!disabled && !isProcessing) {
+    if (!disabled && !isUploading) {
       setIsDragging(true);
     }
   };
@@ -155,11 +83,11 @@ export function VideoUploadMol({
     event.preventDefault();
     setIsDragging(false);
 
-    if (disabled || isProcessing) return;
+    if (disabled || isUploading) return;
 
     const files = event.dataTransfer.files;
     if (files && files.length > 0) {
-      handleFileUpload(files[0]);
+      handleFileSelect(files[0]);
     }
   };
 
@@ -167,7 +95,7 @@ export function VideoUploadMol({
    * 点击上传
    */
   const handleClick = () => {
-    if (!disabled && !isProcessing) {
+    if (!disabled && !isUploading) {
       fileInputRef.current?.click();
     }
   };
@@ -176,32 +104,7 @@ export function VideoUploadMol({
    * 移除视频
    */
   const handleRemove = () => {
-    if (uploadedVideo) {
-      URL.revokeObjectURL(uploadedVideo.url);
-    }
     onVideoRemove?.();
-    setError(null);
-    setIsProcessing(false);
-  };
-
-  /**
-   * 格式化文件大小
-   */
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  /**
-   * 格式化时长
-   */
-  const formatDuration = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -221,7 +124,7 @@ export function VideoUploadMol({
 
           <div className='h-56 relative rounded-lg overflow-hidden bg-gray-700'>
             <video
-              src={uploadedVideo.uploadUrl}
+              src={uploadedVideo.uploadUrl || uploadedVideo.url}
               className='w-full h-full object-contain'
               controls
               preload='metadata'
@@ -235,8 +138,8 @@ export function VideoUploadMol({
             'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
             'bg-[#383842] border-[#4a4a54]',
             isDragging && 'border-primary bg-primary/10',
-            (disabled || isProcessing) && 'cursor-not-allowed opacity-50',
-            !disabled && !isProcessing && 'hover:border-primary'
+            (disabled || isUploading) && 'cursor-not-allowed opacity-50',
+            !disabled && !isUploading && 'hover:border-primary'
           )}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -260,13 +163,27 @@ export function VideoUploadMol({
 
             <div className='space-y-2'>
               <p className='text-white font-medium'>
-                {isProcessing ? '正在处理视频...' : isDragging ? '松开以上传视频' : '点击上传视频'}
+                {isUploading
+                  ? uploadProgress
+                    ? `上传中... ${uploadProgress.percent}%`
+                    : '正在处理视频...'
+                  : isDragging
+                  ? '松开以上传视频'
+                  : '点击上传视频'}
               </p>
-              {!isProcessing && (
+              {!isUploading && (
                 <>
                   <p className='text-sm text-gray-400'>或将视频文件拖拽到此处</p>
                   <p className='text-xs text-gray-500'>支持常见的视频格式</p>
                 </>
+              )}
+              {isUploading && uploadProgress && (
+                <div className='w-full bg-gray-700 rounded-full h-2 mt-3'>
+                  <div
+                    className='bg-primary h-2 rounded-full transition-all duration-300'
+                    style={{ width: `${uploadProgress.percent}%` }}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -285,9 +202,9 @@ export function VideoUploadMol({
         ref={fileInputRef}
         type='file'
         accept='video/*'
-        onChange={handleFileSelect}
+        onChange={handleInputChange}
         className='hidden'
-        disabled={disabled || isProcessing}
+        disabled={disabled || isUploading}
       />
     </div>
   );

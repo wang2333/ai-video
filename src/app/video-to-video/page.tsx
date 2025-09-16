@@ -9,7 +9,8 @@ import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import { VideoCarouselMol } from '@/components/mol/videoCarouselMol';
-import { VideoUploadMol, UploadedVideo } from '@/components/mol/videoUploadMol';
+import { VideoUploadMol, VideoFile } from '@/components/mol/videoUploadMol';
+import { useVideoUpload } from '@/hooks/useVideoUpload';
 import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { downloadCurrentVideo } from '@/lib/downloadUtils';
 import { GeneratedVideo, generateVideoToVideo } from '@/lib/apiService';
@@ -90,8 +91,22 @@ const FPS_OPTIONS = [
 ];
 
 export default function VideoToVideoPage() {
-  // 上传状态
-  const [uploadedVideo, setUploadedVideo] = useState<UploadedVideo | null>(null);
+  // 视频上传Hook
+  const {
+    uploadedVideo,
+    isUploading,
+    error: uploadError,
+    uploadProgress,
+    handleFileSelect,
+    removeVideo
+  } = useVideoUpload({
+    onSuccess: uploadUrl => {
+      console.log('视频上传成功:', uploadUrl);
+    },
+    onError: error => {
+      console.error('视频上传失败:', error);
+    }
+  });
 
   // 生成参数
   const [selectedModel, setSelectedModel] = useState('video-style-transform'); // 默认模型
@@ -106,9 +121,6 @@ export default function VideoToVideoPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
 
-  // 上传状态
-  const [isUploading, setIsUploading] = useState(false);
-
   // 视频校验常量
   const SUPPORTED_FORMATS = ['mp4', 'avi', 'mkv', 'mov', 'flv', 'ts', 'mpg', 'mxf'];
   const MAX_SIZE_MB = 100;
@@ -120,7 +132,7 @@ export default function VideoToVideoPage() {
   /**
    * 视频校验函数
    */
-  const validateVideo = (video: UploadedVideo): string | null => {
+  const validateVideo = (video: VideoFile): string | null => {
     // 检查文件扩展名
     const extension = video.name.split('.').pop()?.toLowerCase();
     if (!extension || !SUPPORTED_FORMATS.includes(extension)) {
@@ -163,64 +175,21 @@ export default function VideoToVideoPage() {
   };
 
   /**
-   * 上传视频到服务器
+   * 处理文件选择（在上传Hook中自动处理上传）
    */
-  const uploadVideoToServer = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `上传失败: ${response.status} ${response.statusText}`);
-    }
-
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.error || '上传失败');
-    }
-
-    if (result.data?.url) {
-      return result.data.url;
-    } else {
-      throw new Error('服务器未返回有效的文件URL');
-    }
-  };
-
-  /**
-   * 处理视频上传
-   */
-  const handleVideoUpload = async (video: UploadedVideo) => {
-    // 进行视频校验
-    const validationError = validateVideo(video);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
+  const handleFileSelectWrapper = async (file: File) => {
     setError(null);
-    setIsUploading(true);
 
-    try {
-      // 上传到服务器
-      const uploadUrl = await uploadVideoToServer(video.file);
+    // 上传完成后进行业务校验
+    await handleFileSelect(file);
 
-      // 更新视频对象，添加服务器URL
-      const updatedVideo: UploadedVideo = {
-        ...video,
-        uploadUrl
-      };
-
-      setUploadedVideo(updatedVideo);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : '视频上传失败，请重试');
-    } finally {
-      setIsUploading(false);
+    // 检查上传后的视频是否符合业务要求
+    if (uploadedVideo) {
+      const validationError = validateVideo(uploadedVideo);
+      if (validationError) {
+        setError(validationError);
+        removeVideo(); // 移除不符合要求的视频
+      }
     }
   };
 
@@ -228,7 +197,7 @@ export default function VideoToVideoPage() {
    * 处理视频移除
    */
   const handleVideoRemove = () => {
-    setUploadedVideo(null);
+    removeVideo();
     setError(null);
   };
 
@@ -382,17 +351,14 @@ export default function VideoToVideoPage() {
               <div>
                 <label className='block text-sm text-gray-300 mb-2'>上传视频</label>
                 <VideoUploadMol
-                  onVideoUpload={handleVideoUpload}
+                  onFileSelect={handleFileSelectWrapper}
                   onVideoRemove={handleVideoRemove}
                   uploadedVideo={uploadedVideo}
-                  disabled={isGenerating || isUploading}
+                  disabled={isGenerating}
+                  error={uploadError || error}
+                  isUploading={isUploading}
+                  uploadProgress={uploadProgress}
                 />
-                {isUploading && (
-                  <div className='mt-2 text-sm text-blue-400 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 flex items-center gap-2'>
-                    <div className='w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin' />
-                    <span>正在上传...</span>
-                  </div>
-                )}
                 {uploadedVideo?.uploadUrl && (
                   <div className='mt-2 text-sm text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg p-3'>
                     ✓ 视频已成功上传
@@ -417,7 +383,6 @@ export default function VideoToVideoPage() {
                   renderTrigger={selectedOption => {
                     if (!selectedOption) return null;
                     const option = selectedOption as SelectOption;
-                    const style = VIDEO_STYLES.find(s => s.id.toString() === option.value);
                     return (
                       <div className='flex items-center gap-3 py-1'>
                         <div className='text-left'>
@@ -428,7 +393,6 @@ export default function VideoToVideoPage() {
                     );
                   }}
                   renderItem={option => {
-                    const style = VIDEO_STYLES.find(s => s.id.toString() === option.value);
                     return (
                       <div className='flex items-center gap-3'>
                         <div>
@@ -508,19 +472,18 @@ export default function VideoToVideoPage() {
             <div className='pt-4 border-t border-gray-700'>
               <Button
                 onClick={handleGenerate}
-                disabled={!uploadedVideo || !uploadedVideo.uploadUrl || isGenerating || isUploading}
+                disabled={!uploadedVideo || !uploadedVideo.uploadUrl || isGenerating}
                 className='w-full h-12 bg-primary hover:bg-primary/90 text-lg'
               >
                 <Sparkles className={cn('w-5 h-5 mr-2', isGenerating && 'animate-spin')} />
-                {isGenerating ? '转换中...' : '开始转换'}
+                {isGenerating ? '生成中...' : '生成视频'}
               </Button>
             </div>
           </div>
 
           {/* Right Video Display */}
           <div className='flex flex-col flex-1 bg-[#24222D] p-4'>
-            <div className='flex justify-between items-center mb-2'>
-              <h2 className='text-lg font-medium'>转换结果</h2>
+            <div className='flex justify-end mb-2'>
               <Button
                 disabled={isGenerating}
                 size='sm'

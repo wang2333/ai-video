@@ -14,6 +14,7 @@ import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { ImageUploadMol, UploadedImage } from '@/components/mol/imageUploadMol';
 import { downloadImageSmart } from '@/lib/downloadUtils';
 import { generateImageToImage, GeneratedImage } from '@/lib/apiService';
+import { useGenerateTimer } from '@/hooks/useGenerateTimer';
 
 // Model data - 图生图支持的模型
 const models = [
@@ -73,6 +74,9 @@ export default function ImageToImage() {
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>(sampleImages);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // 计时器Hook
+  const { formattedDuration, start: startTimer, stop: stopTimer } = useGenerateTimer();
 
   /**
    * 处理图片上传
@@ -175,7 +179,9 @@ export default function ImageToImage() {
       return;
     }
 
+    // 开始计时和生成状态
     setIsGenerating(true);
+    startTimer();
     setError(null);
 
     try {
@@ -197,7 +203,9 @@ export default function ImageToImage() {
       const errorMessage = err instanceof Error ? err.message : '生成图像时发生未知错误';
       setError(errorMessage);
     } finally {
+      // 停止计时和生成状态
       setIsGenerating(false);
+      stopTimer();
     }
   };
 
@@ -364,7 +372,7 @@ export default function ImageToImage() {
                 className='w-full h-12 bg-primary hover:bg-primary/90 text-lg'
               >
                 <Sparkles className={cn('w-5 h-5 mr-2', isGenerating && 'animate-spin')} />
-                {isGenerating ? '生成中...' : '生成'}
+                {isGenerating ? `生成中... ${formattedDuration}` : '生成'}
               </Button>
             </div>
           </div>

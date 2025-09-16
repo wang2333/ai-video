@@ -14,6 +14,7 @@ import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { DialogMol } from '@/components/mol/dialogMol';
 import { downloadImageSmart } from '@/lib/downloadUtils';
 import { generateImage, GeneratedImage } from '@/lib/apiService';
+import { useGenerateTimer } from '@/hooks/useGenerateTimer';
 
 const SIZE_MAP: Record<string, string> = {
   '1:1': '1328*1328', // 正方形
@@ -154,6 +155,9 @@ export default function TextToImagePage() {
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // 计时器Hook
+  const { formattedDuration, start: startTimer, stop: stopTimer } = useGenerateTimer();
+
   useEffect(() => {
     setExamples(getExamples(4));
   }, []);
@@ -241,7 +245,9 @@ export default function TextToImagePage() {
       return;
     }
 
+    // 开始计时和生成状态
     setIsGenerating(true);
+    startTimer();
     setError(null);
 
     try {
@@ -267,7 +273,9 @@ export default function TextToImagePage() {
       const errorMessage = err instanceof Error ? err.message : '生成图像时发生未知错误';
       setError(errorMessage);
     } finally {
+      // 停止计时和生成状态
       setIsGenerating(false);
+      stopTimer();
     }
   };
 
@@ -493,7 +501,7 @@ export default function TextToImagePage() {
                 className='w-full h-12 bg-primary hover:bg-primary/90 text-lg'
               >
                 <Sparkles className={cn('w-5 h-5 mr-2', isGenerating && 'animate-spin')} />
-                {isGenerating ? '生成中...' : '生成'}
+                {isGenerating ? `生成中... ${formattedDuration}` : '生成'}
               </Button>
             </div>
           </div>
