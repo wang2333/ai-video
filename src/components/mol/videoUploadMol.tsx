@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { Upload, X, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { VideoPlayer } from '@/components/ui/video-player';
 
 export interface VideoFile {
   id: string;
@@ -123,11 +124,13 @@ export function VideoUploadMol({
           </Button>
 
           <div className='h-56 relative rounded-lg overflow-hidden bg-gray-700'>
-            <video
+            <VideoPlayer
               src={uploadedVideo.uploadUrl || uploadedVideo.url}
-              className='w-full h-full object-contain'
-              controls
-              preload='metadata'
+              className='w-full h-full'
+              controls={false}
+              autoPlay
+              loop
+              muted={false}
             />
           </div>
         </div>

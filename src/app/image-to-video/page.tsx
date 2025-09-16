@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { VideoCarouselMol } from '@/components/mol/videoCarouselMol';
+import { VideoPlayer } from '@/components/ui/video-player';
 import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { ImageUploadMol, UploadedImage } from '@/components/mol/imageUploadMol';
 import { downloadCurrentVideo } from '@/lib/downloadUtils';
@@ -81,16 +81,15 @@ export default function ImageToVideoPage() {
   const [selectedModel, setSelectedModel] = useState('wanx2.1-i2v-turbo');
   const [qualityLevel, setQualityLevel] = useState('480P');
   const [videoDuration, setVideoDuration] = useState(5);
-  const [outputCount, setOutputCount] = useState(1);
 
   // 图生视频特有状态
   const [uploadedImage, setUploadedImage] = useState<UploadedImage | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedVideos, setGeneratedVideos] = useState<GeneratedVideo[]>([
-    { id: 1, src: '/demo.mp4' }
-  ]);
+  const [generatedVideo, setGeneratedVideo] = useState<GeneratedVideo | null>({
+    id: 1,
+    src: '/demo.mp4'
+  });
   const [error, setError] = useState<string | null>(null);
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
 
   // 计时器Hook
   const { formattedDuration, start: startTimer, stop: stopTimer } = useGenerateTimer();
@@ -131,22 +130,14 @@ export default function ImageToVideoPage() {
    * 下载当前显示的视频
    */
   const handleDownloadCurrent = async () => {
-    if (generatedVideos.length === 0) return;
+    if (!generatedVideo) return;
 
     try {
-      // 注意：这里需要适配视频下载逻辑
-      await downloadCurrentVideo(generatedVideos, currentVideoIndex);
+      await downloadCurrentVideo([generatedVideo], 0);
     } catch (error) {
       console.error('下载失败:', error);
       setError('下载失败，请重试');
     }
-  };
-
-  /**
-   * 轮播图当前视频变化回调
-   */
-  const handleCurrentVideoChange = (index: number) => {
-    setCurrentVideoIndex(index);
   };
 
   /**
@@ -176,9 +167,6 @@ export default function ImageToVideoPage() {
     }
     if (!selectedModel) {
       return '请选择模型';
-    }
-    if (outputCount < 1 || outputCount > 4) {
-      return '输出数量必须在1-4之间';
     }
     return null;
   };
@@ -221,13 +209,10 @@ export default function ImageToVideoPage() {
       });
 
       if (result.success && result.data) {
-        setGeneratedVideos([
-          {
-            id: Date.now(),
-            src: result.data.output.video_url
-          }
-        ]);
-        setCurrentVideoIndex(0); // 重置到第一个视频
+        setGeneratedVideo({
+          id: Date.now(),
+          src: result.data.output.video_url
+        });
       } else {
         throw new Error(result.error || '图生视频失败');
       }
@@ -383,35 +368,13 @@ export default function ImageToVideoPage() {
                 </div>
               </div>
 
-              {/* Output Count */}
-              <div>
-                <label className='block text-sm text-gray-300 mb-2'>输出视频数量</label>
-                <div className='grid grid-cols-4 gap-2'>
-                  {outputCounts.map(count => (
-                    <Button
-                      key={count}
-                      disabled={count > 1}
-                      variant={outputCount === count ? 'default' : 'outline'}
-                      onClick={() => setOutputCount(count)}
-                      className={
-                        outputCount === count
-                          ? 'bg-primary hover:bg-primary/90'
-                          : 'bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] hover:text-white'
-                      }
-                    >
-                      {count}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
               {/* Credit Cost */}
               <div className='flex justify-between text-sm text-gray-400'>
                 <div className='flex items-center gap-1'>
                   <span>所需额度:</span>
                   <Info className='w-4 h-4' />
                 </div>
-                <span className='text-white'>{outputCount * 50} 额度</span>
+                <span className='text-white'>{50} 额度</span>
               </div>
             </div>
 
@@ -457,13 +420,36 @@ export default function ImageToVideoPage() {
 
             {/* 显示生成的视频或示例视频 */}
             <div className='flex-1 flex items-center justify-center min-h-0 overflow-hidden'>
-              <VideoCarouselMol
-                videos={generatedVideos}
-                className='w-full h-full max-w-full max-h-full'
-                onCurrentChange={handleCurrentVideoChange}
-                autoPlay={true}
-                showThumbnails={true}
-              />
+              {generatedVideo ? (
+                <VideoPlayer
+                  src={generatedVideo.src}
+                  className='w-full h-full max-w-full max-h-full'
+                  autoPlay={true}
+                  controls={true}
+                  loop={true}
+                />
+              ) : (
+                <div className='flex items-center justify-center bg-gray-900 rounded-lg w-full h-full'>
+                  <div className='text-center text-gray-400 space-y-4'>
+                    <div className='w-24 h-24 bg-gray-700 rounded-lg flex items-center justify-center mx-auto'>
+                      <svg
+                        className='w-12 h-12'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M14.828 14.828a4 4 0 01-5.656 0M9 10h1.01M15 10h1.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                        />
+                      </svg>
+                    </div>
+                    <p className='text-sm'>暂无视频</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

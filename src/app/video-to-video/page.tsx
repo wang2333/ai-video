@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
-import { VideoCarouselMol } from '@/components/mol/videoCarouselMol';
+import { VideoPlayer } from '@/components/ui/video-player';
 import { VideoUploadMol, VideoFile } from '@/components/mol/videoUploadMol';
 import { useVideoUpload } from '@/hooks/useVideoUpload';
 import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
@@ -125,11 +125,11 @@ export default function VideoToVideoPage() {
 
   // 生成状态
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedVideos, setGeneratedVideos] = useState<GeneratedVideo[]>([
-    { id: 1, src: '/demo.mp4' } // 示例视频
-  ]);
+  const [generatedVideo, setGeneratedVideo] = useState<GeneratedVideo | null>({
+    id: 1,
+    src: '/demo.mp4'
+  });
   const [error, setError] = useState<string | null>(null);
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
 
   // 视频校验常量
   const SUPPORTED_FORMATS = ['mp4', 'avi', 'mkv', 'mov', 'flv', 'ts', 'mpg', 'mxf'];
@@ -251,13 +251,10 @@ export default function VideoToVideoPage() {
       });
 
       if (result.success && result.data) {
-        setGeneratedVideos([
-          {
-            id: Date.now(),
-            src: result.data.output.output_video_url
-          }
-        ]);
-        setCurrentVideoIndex(0);
+        setGeneratedVideo({
+          id: Date.now(),
+          src: result.data.output.output_video_url
+        });
       } else {
         setError(result.error || '提交视频生成任务失败');
       }
@@ -274,21 +271,14 @@ export default function VideoToVideoPage() {
    * 下载当前视频
    */
   const handleDownloadCurrent = async () => {
-    if (generatedVideos.length === 0) return;
+    if (!generatedVideo) return;
 
     try {
-      await downloadCurrentVideo(generatedVideos, currentVideoIndex);
+      await downloadCurrentVideo([generatedVideo], 0);
     } catch (error) {
       console.error('下载失败:', error);
       setError('下载失败，请重试');
     }
-  };
-
-  /**
-   * 轮播图当前视频变化回调
-   */
-  const handleCurrentVideoChange = (index: number) => {
-    setCurrentVideoIndex(index);
   };
 
   return (
@@ -478,19 +468,6 @@ export default function VideoToVideoPage() {
               </div>
             )}
 
-            {/* Timer Display */}
-            {isTimerRunning && (
-              <div className='bg-[#383842] rounded-lg p-3 mb-4'>
-                <div className='flex items-center justify-between'>
-                  <span className='text-sm text-gray-300'>生成进度</span>
-                  <div className='flex items-center gap-2'>
-                    <div className='w-2 h-2 bg-primary rounded-full animate-pulse' />
-                    <span className='text-lg font-mono text-primary'>{formattedDuration}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Generate Button */}
             <div className='pt-4 border-t border-gray-700'>
               <Button
@@ -525,13 +502,36 @@ export default function VideoToVideoPage() {
 
             {/* 显示生成的视频或示例视频 */}
             <div className='flex-1 flex items-center justify-center min-h-0 overflow-hidden'>
-              <VideoCarouselMol
-                videos={generatedVideos}
-                className='w-full h-full max-w-full max-h-full'
-                onCurrentChange={handleCurrentVideoChange}
-                autoPlay={true}
-                showThumbnails={true}
-              />
+              {generatedVideo ? (
+                <VideoPlayer
+                  src={generatedVideo.src}
+                  className='w-full h-full max-w-full max-h-full'
+                  autoPlay={true}
+                  controls={true}
+                  loop={true}
+                />
+              ) : (
+                <div className='flex items-center justify-center bg-gray-900 rounded-lg w-full h-full'>
+                  <div className='text-center text-gray-400 space-y-4'>
+                    <div className='w-24 h-24 bg-gray-700 rounded-lg flex items-center justify-center mx-auto'>
+                      <svg
+                        className='w-12 h-12'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M14.828 14.828a4 4 0 01-5.656 0M9 10h1.01M15 10h1.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                        />
+                      </svg>
+                    </div>
+                    <p className='text-sm'>暂无视频</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

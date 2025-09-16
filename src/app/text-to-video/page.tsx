@@ -10,7 +10,7 @@ import Image from 'next/image';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { SelectMol, type SelectOption } from '@/components/mol/SelectMol';
-import { VideoCarouselMol } from '@/components/mol/videoCarouselMol';
+import { VideoPlayer } from '@/components/ui/video-player';
 import { generateVideo, type GeneratedVideo } from '@/lib/apiService';
 import { downloadCurrentVideo } from '@/lib/downloadUtils';
 import { useGenerateTimer } from '@/hooks/useGenerateTimer';
@@ -105,15 +105,14 @@ export default function TextToVideoPage() {
   const [qualityLevel, setQualityLevel] = useState('480P');
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [videoDuration, setVideoDuration] = useState(5);
-  const [outputCount, setOutputCount] = useState(1);
 
   // 生成状态
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedVideos, setGeneratedVideos] = useState<GeneratedVideo[]>([
-    { id: 0, src: '/demo.mp4' }
-  ]);
+  const [generatedVideo, setGeneratedVideo] = useState<GeneratedVideo | null>({
+    id: 0,
+    src: '/demo.mp4'
+  });
   const [error, setError] = useState<string | null>(null);
-  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
 
   // 计时器Hook
   const { formattedDuration, start: startTimer, stop: stopTimer } = useGenerateTimer();
@@ -187,9 +186,6 @@ export default function TextToVideoPage() {
     if (trimmedPrompt.length > 2000) {
       return '提示词长度不能超过2000个字符';
     }
-    if (outputCount < 1 || outputCount > 4) {
-      return '输出数量必须在1-4之间';
-    }
     return null;
   };
 
@@ -213,18 +209,14 @@ export default function TextToVideoPage() {
         model: selectedModel,
         prompt: prompt.trim(),
         resolution: getResolution(),
-        outputCount: outputCount,
         duration: videoDuration
       });
 
       if (result.success && result.data) {
-        setGeneratedVideos([
-          {
-            id: Date.now(),
-            src: result.data.output.video_url
-          }
-        ]);
-        setCurrentVideoIndex(0);
+        setGeneratedVideo({
+          id: Date.now(),
+          src: result.data.output.video_url
+        });
       } else {
         setError(result.error || '提交视频生成任务失败');
       }
@@ -242,10 +234,10 @@ export default function TextToVideoPage() {
    * 下载当前视频
    */
   const handleDownloadCurrent = async () => {
-    if (generatedVideos.length === 0) return;
+    if (!generatedVideo) return;
 
     try {
-      await downloadCurrentVideo(generatedVideos, currentVideoIndex);
+      await downloadCurrentVideo([generatedVideo], 0);
     } catch (error) {
       console.error('下载失败:', error);
       setError('下载失败，请重试');
@@ -418,33 +410,13 @@ export default function TextToVideoPage() {
                 </Button>
               </div>
 
-              {/* Output Count */}
-              <label className='block text-sm text-gray-300 mb-2'>输出视频数量</label>
-              <div className='grid grid-cols-4 gap-2'>
-                {outputCounts.map(count => (
-                  <Button
-                    key={count}
-                    variant={outputCount === count ? 'default' : 'outline'}
-                    onClick={() => setOutputCount(count)}
-                    disabled={count > 1}
-                    className={
-                      outputCount === count
-                        ? 'bg-primary hover:bg-primary/90'
-                        : 'bg-[#383842] border-[#4a4a54] hover:bg-[#4a4a54] hover:text-white'
-                    }
-                  >
-                    {count}
-                  </Button>
-                ))}
-              </div>
-
               {/* Credit Cost */}
               <div className='flex justify-between text-sm text-gray-400'>
                 <div className='flex items-center gap-1'>
                   <span>所需额度:</span>
                   <Info className='w-4 h-4' />
                 </div>
-                <span className='text-white'>{outputCount * 20} 额度</span>
+                <span className='text-white'>{20} 额度</span>
               </div>
             </div>
 
@@ -490,13 +462,36 @@ export default function TextToVideoPage() {
 
             {/* Video Display Area */}
             <div className='flex-1 flex items-center justify-center min-h-0 overflow-hidden'>
-              <VideoCarouselMol
-                videos={generatedVideos}
-                className='w-full h-full max-w-full max-h-full'
-                onCurrentChange={setCurrentVideoIndex}
-                autoPlay={true}
-                showThumbnails={true}
-              />
+              {generatedVideo ? (
+                <VideoPlayer
+                  src={generatedVideo.src}
+                  className='w-full h-full max-w-full max-h-full'
+                  autoPlay={true}
+                  controls={true}
+                  loop={true}
+                />
+              ) : (
+                <div className='flex items-center justify-center bg-gray-900 rounded-lg w-full h-full'>
+                  <div className='text-center text-gray-400 space-y-4'>
+                    <div className='w-24 h-24 bg-gray-700 rounded-lg flex items-center justify-center mx-auto'>
+                      <svg
+                        className='w-12 h-12'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M14.828 14.828a4 4 0 01-5.656 0M9 10h1.01M15 10h1.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                        />
+                      </svg>
+                    </div>
+                    <p className='text-sm'>暂无视频</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

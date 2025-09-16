@@ -30,7 +30,6 @@ export interface GenerateVideoParams {
   model: string;
   prompt: string;
   resolution: string;
-  outputCount: number;
   duration?: number;
 }
 

@@ -1,0 +1,161 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
+
+// 动态导入 flv.js 以避免 SSR 问题
+let flvjs: any = null;
+if (typeof window !== 'undefined') {
+  import('flv.js').then((mod: any) => {
+    flvjs = mod?.default ?? mod;
+  });
+}
+
+export interface VideoPlayerProps {
+  src: string;
+  className?: string;
+  autoPlay?: boolean;
+  loop?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  onEnded?: () => void;
+  onPlay?: () => void;
+  onPause?: () => void;
+  onError?: (error: any) => void;
+  onReady?: () => void;
+}
+
+// 判断是否使用 flv.js 播放
+function shouldUseFlv(url: string) {
+  try {
+    const base = url.split('?')[0].toLowerCase();
+    if (base.endsWith('.flv')) return true;
+    if (/([?&#])format=flv(?!\w)/i.test(url)) return true;
+  } catch {}
+  return false;
+}
+
+export function VideoPlayer({
+  src,
+  className,
+  autoPlay = false,
+  loop = false,
+  controls = true,
+  muted = true,
+  onEnded,
+  onPlay,
+  onPause,
+  onError,
+  onReady
+}: VideoPlayerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const flvPlayerRef = useRef<any>(null);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // 清理旧实例
+    const destroyFlv = () => {
+      if (flvPlayerRef.current) {
+        try {
+          flvPlayerRef.current.unload?.();
+          flvPlayerRef.current.detachMediaElement?.();
+          flvPlayerRef.current.destroy?.();
+        } catch {}
+        flvPlayerRef.current = null;
+      }
+    };
+    destroyFlv();
+    setHasError(false);
+
+    // 绑定基础事件
+    const onCanPlay = () => onReady?.();
+    const onPlayEvt = () => onPlay?.();
+    const onPauseEvt = () => onPause?.();
+    const onEndedEvt = () => onEnded?.();
+    const onErrorEvt = (e: any) => {
+      setHasError(true);
+      onError?.(e);
+    };
+
+    video.addEventListener('loadedmetadata', onCanPlay);
+    video.addEventListener('play', onPlayEvt);
+    video.addEventListener('pause', onPauseEvt);
+    video.addEventListener('ended', onEndedEvt);
+    video.addEventListener('error', onErrorEvt);
+
+    const useFlv = shouldUseFlv(src) && flvjs && flvjs.isSupported?.();
+
+    if (useFlv) {
+      try {
+        const mediaDataSource = { type: 'flv', url: src };
+        const flvConfig = {
+          enableStashBuffer: true,
+          isLive: false,
+          cors: true
+        };
+        const player = flvjs.createPlayer(mediaDataSource, flvConfig);
+        player.attachMediaElement(video);
+        player.load();
+        if (autoPlay) player.play().catch(() => {});
+
+        player.on(flvjs.Events.ERROR, (type: any, detail: any) => {
+          setHasError(true);
+          onError?.({ type, detail });
+        });
+
+        flvPlayerRef.current = player;
+      } catch (e) {
+        setHasError(true);
+        onError?.(e);
+      }
+    } else {
+      // 原生播放 (mp4 等)
+      try {
+        video.src = src;
+        if (autoPlay) video.play().catch(() => {});
+      } catch (e) {
+        setHasError(true);
+        onError?.(e);
+      }
+    }
+
+    return () => {
+      video.removeEventListener('loadedmetadata', onCanPlay);
+      video.removeEventListener('play', onPlayEvt);
+      video.removeEventListener('pause', onPauseEvt);
+      video.removeEventListener('ended', onEndedEvt);
+      video.removeEventListener('error', onErrorEvt);
+      destroyFlv();
+    };
+  }, [src, autoPlay, onEnded, onPause, onPlay, onReady, onError]);
+
+  return (
+    <div className={cn('relative bg-black rounded-lg overflow-hidden w-full h-full', className)}>
+      <video
+        ref={videoRef}
+        className='w-full h-full object-contain'
+        controls={controls}
+        loop={loop}
+        muted={muted}
+        playsInline
+      />
+
+      {hasError && (
+        <div className='absolute inset-0 flex items-center justify-center bg-black/70 z-50'>
+          <div className='text-center text-white'>
+            <div className='text-lg mb-2'>视频加载失败</div>
+            <button
+              onClick={() => setHasError(false)}
+              className='px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-white text-sm'
+            >
+              重试
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
