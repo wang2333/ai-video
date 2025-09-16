@@ -53,6 +53,17 @@ export function VideoPlayer({
   const [hasError, setHasError] = useState(false);
   const isFlv = useMemo(() => shouldUseFlv(src), [src]);
 
+  const toProxied = (url: string) => {
+    try {
+      const u = new URL(url, typeof window !== 'undefined' ? window.location.href : 'http://localhost');
+      const host = u.hostname.toLowerCase();
+      const needsProxy = host.includes('clouddn.com') || host.includes('qiniudn.com');
+      return needsProxy ? `/api/video-proxy?url=${encodeURIComponent(u.toString())}` : url;
+    } catch {
+      return url;
+    }
+  };
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -88,10 +99,11 @@ export function VideoPlayer({
     video.addEventListener('error', onErrorEvt);
 
     const useFlv = isFlv && flvjs && flvjs.isSupported?.();
+    const effectiveSrc = toProxied(src);
 
     if (useFlv) {
       try {
-        const mediaDataSource = { type: 'flv', url: src };
+        const mediaDataSource = { type: 'flv', url: effectiveSrc };
         const flvConfig = {
           enableStashBuffer: true,
           isLive: false,
@@ -119,7 +131,7 @@ export function VideoPlayer({
     } else {
       // 原生播放 (mp4 等)
       try {
-        video.src = src;
+        video.src = effectiveSrc;
         if (autoPlay)
           video.play().catch((err: any) => {
             console.warn('video autoplay blocked:', err);
