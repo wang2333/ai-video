@@ -42,5 +42,17 @@
     "tailwindcss": "^4",
     "tw-animate-css": "^1.3.8",
     "typescript": "^5.9.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "vm2": "npm:empty-module@^0.0.2",
+      "coffee-script": "npm:empty-module@^0.0.2",
+      "coffeescript": "npm:empty-module@^0.0.2"
+    }
+  },
+  "overrides": {
+    "vm2": "npm:empty-module@^0.0.2",
+    "coffee-script": "npm:empty-module@^0.0.2",
+    "coffeescript": "npm:empty-module@^0.0.2"
   }
 }
