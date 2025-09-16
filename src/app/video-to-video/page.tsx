@@ -14,6 +14,7 @@ import { useVideoUpload } from '@/hooks/useVideoUpload';
 import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { downloadCurrentVideo } from '@/lib/downloadUtils';
 import { GeneratedVideo, generateVideoToVideo } from '@/lib/apiService';
+import { useGenerateTimer } from '@/hooks/useGenerateTimer';
 
 /**
  * 视频风格类型配置
@@ -107,6 +108,15 @@ export default function VideoToVideoPage() {
       console.error('视频上传失败:', error);
     }
   });
+
+  // 生成计时器Hook
+  const {
+    formattedDuration,
+    isRunning: isTimerRunning,
+    start: startTimer,
+    stop: stopTimer,
+    reset: resetTimer
+  } = useGenerateTimer();
 
   // 生成参数
   const [selectedModel, setSelectedModel] = useState('video-style-transform'); // 默认模型
@@ -229,6 +239,7 @@ export default function VideoToVideoPage() {
 
     setIsGenerating(true);
     setError(null);
+    startTimer(); // 开始计时
 
     try {
       // 调用视频风格转换API
@@ -247,16 +258,15 @@ export default function VideoToVideoPage() {
           }
         ]);
         setCurrentVideoIndex(0);
-        setIsGenerating(false);
       } else {
         setError(result.error || '提交视频生成任务失败');
-        setIsGenerating(false);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '生成视频时发生未知错误';
       setError(errorMessage);
     } finally {
       setIsGenerating(false);
+      stopTimer(); // 停止计时
     }
   };
 
@@ -468,6 +478,19 @@ export default function VideoToVideoPage() {
               </div>
             )}
 
+            {/* Timer Display */}
+            {isTimerRunning && (
+              <div className='bg-[#383842] rounded-lg p-3 mb-4'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-sm text-gray-300'>生成进度</span>
+                  <div className='flex items-center gap-2'>
+                    <div className='w-2 h-2 bg-primary rounded-full animate-pulse' />
+                    <span className='text-lg font-mono text-primary'>{formattedDuration}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Generate Button */}
             <div className='pt-4 border-t border-gray-700'>
               <Button
@@ -476,7 +499,7 @@ export default function VideoToVideoPage() {
                 className='w-full h-12 bg-primary hover:bg-primary/90 text-lg'
               >
                 <Sparkles className={cn('w-5 h-5 mr-2', isGenerating && 'animate-spin')} />
-                {isGenerating ? '生成中...' : '生成视频'}
+                {isGenerating ? `生成中... ${formattedDuration}` : '生成视频'}
               </Button>
             </div>
           </div>
