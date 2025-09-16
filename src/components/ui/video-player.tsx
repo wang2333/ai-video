@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
-// 动态导入 flv.js 以避免 SSR 问题
+// 动态导入 flv.js（避免 SSR 问题）
 let flvjs: any = null;
 if (typeof window !== 'undefined') {
   import('flv.js').then((mod: any) => {
@@ -25,7 +25,7 @@ export interface VideoPlayerProps {
   onReady?: () => void;
 }
 
-// 判断是否使用 flv.js 播放
+// 是否使用 flv.js 播放
 function shouldUseFlv(url: string) {
   try {
     const base = url.split('?')[0].toLowerCase();
@@ -46,11 +46,12 @@ export function VideoPlayer({
   onPlay,
   onPause,
   onError,
-  onReady
+  onReady,
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const flvPlayerRef = useRef<any>(null);
   const [hasError, setHasError] = useState(false);
+  const isFlv = useMemo(() => shouldUseFlv(src), [src]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -70,7 +71,7 @@ export function VideoPlayer({
     destroyFlv();
     setHasError(false);
 
-    // 绑定基础事件
+    // 基础事件
     const onCanPlay = () => onReady?.();
     const onPlayEvt = () => onPlay?.();
     const onPauseEvt = () => onPause?.();
@@ -86,7 +87,7 @@ export function VideoPlayer({
     video.addEventListener('ended', onEndedEvt);
     video.addEventListener('error', onErrorEvt);
 
-    const useFlv = shouldUseFlv(src) && flvjs && flvjs.isSupported?.();
+    const useFlv = isFlv && flvjs && flvjs.isSupported?.();
 
     if (useFlv) {
       try {
@@ -94,12 +95,15 @@ export function VideoPlayer({
         const flvConfig = {
           enableStashBuffer: true,
           isLive: false,
-          cors: true
+          cors: true,
         };
         const player = flvjs.createPlayer(mediaDataSource, flvConfig);
         player.attachMediaElement(video);
         player.load();
-        if (autoPlay) player.play().catch(() => {});
+        if (autoPlay)
+          player.play().catch((err: any) => {
+            console.warn('flv autoplay blocked:', err);
+          });
 
         player.on(flvjs.Events.ERROR, (type: any, detail: any) => {
           setHasError(true);
@@ -109,15 +113,20 @@ export function VideoPlayer({
         flvPlayerRef.current = player;
       } catch (e) {
         setHasError(true);
+        console.error('flv.js init error:', e);
         onError?.(e);
       }
     } else {
       // 原生播放 (mp4 等)
       try {
         video.src = src;
-        if (autoPlay) video.play().catch(() => {});
+        if (autoPlay)
+          video.play().catch((err: any) => {
+            console.warn('video autoplay blocked:', err);
+          });
       } catch (e) {
         setHasError(true);
+        console.error('video element init error:', e);
         onError?.(e);
       }
     }
@@ -130,7 +139,7 @@ export function VideoPlayer({
       video.removeEventListener('error', onErrorEvt);
       destroyFlv();
     };
-  }, [src, autoPlay, onEnded, onPause, onPlay, onReady, onError]);
+  }, [src, autoPlay, onEnded, onPause, onPlay, onReady, onError, isFlv]);
 
   return (
     <div className={cn('relative bg-black rounded-lg overflow-hidden w-full h-full', className)}>
@@ -140,8 +149,9 @@ export function VideoPlayer({
         controls={controls}
         loop={loop}
         muted={muted}
-        crossOrigin='anonymous'
+        crossOrigin={isFlv ? 'anonymous' : undefined}
         playsInline
+        preload='metadata'
       />
 
       {hasError && (
