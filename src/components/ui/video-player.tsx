@@ -53,24 +53,6 @@ export function VideoPlayer({
   const [hasError, setHasError] = useState(false);
   const isFlv = useMemo(() => shouldUseFlv(src), [src]);
 
-  // 自�?�检测并通过本地 HTTPS 代理包装外部/HTTP 资源，避免混合内容与防盗链403
-  const effectiveSrc = useMemo(() => {
-    if (typeof window === 'undefined') return src;
-    try {
-      const u = new URL(src, window.location.href);
-      // 非 http/https（如 blob:, data:）维持原样
-      if (!/^https?:$/.test(u.protocol)) return src;
-      const isCrossOrigin = u.origin !== window.location.origin;
-      const isPlainHttp = u.protocol === 'http:';
-      if (isPlainHttp || isCrossOrigin) {
-        return `/api/video-proxy?url=${encodeURIComponent(u.toString())}`;
-      }
-      return src;
-    } catch {
-      return src;
-    }
-  }, [src]);
-
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -109,7 +91,7 @@ export function VideoPlayer({
 
     if (useFlv) {
       try {
-        const mediaDataSource = { type: 'flv', url: effectiveSrc };
+        const mediaDataSource = { type: 'flv', url: src };
         const flvConfig = {
           enableStashBuffer: true,
           isLive: false,
@@ -138,7 +120,7 @@ export function VideoPlayer({
     } else {
       // 原生播放 (mp4 等)
       try {
-        video.src = effectiveSrc;
+        video.src = src;
         if (autoPlay)
           video.play().catch((err: any) => {
             console.warn('video autoplay blocked:', err);
@@ -158,7 +140,7 @@ export function VideoPlayer({
       video.removeEventListener('error', onErrorEvt);
       destroyFlv();
     };
-  }, [effectiveSrc, src, autoPlay, onEnded, onPause, onPlay, onReady, onError, isFlv]);
+  }, [src, autoPlay, onEnded, onPause, onPlay, onReady, onError, isFlv]);
 
   return (
     <div className={cn('relative bg-black rounded-lg overflow-hidden w-full h-full', className)}>
