@@ -1,91 +1,18 @@
 import { baseApiClient, ApiResult } from './baseApiClient';
+import type {
+  GenerateImageParams,
+  GenerateImageToImageParams,
+  GenerateVideoParams,
+  ImageToVideoParams,
+  VideoToVideoParams,
+  GeneratedImage,
+  GeneratedVideo,
+  VideoGenerationResponse,
+  VideoGenerationResponse2
+} from '@/types/api';
+import { getApiEndpoint, APP_CONFIG } from '@/config';
 
-// ==================== 接口定义 ====================
-
-/**
- * 文生图参数接口
- */
-export interface GenerateImageParams {
-  model: string;
-  prompt: string;
-  sieze: string;
-  outputCount: number;
-}
-
-/**
- * 图生图参数接口
- */
-export interface GenerateImageToImageParams {
-  model: string;
-  prompt?: string;
-  imageUrl: string;
-  outputCount: number;
-  styleIndex?: number;
-}
-
-/**
- * 视频生成参数接口
- */
-export interface GenerateVideoParams {
-  model: string;
-  prompt: string;
-  resolution: string;
-  duration?: number;
-}
-
-/**
- * 图生视频参数接口
- */
-export interface ImageToVideoParams {
-  model: string;
-  prompt: string;
-  imageUrl: string;
-  resolution: string;
-  duration: number;
-}
-
-/**
- * 视频风格转换参数接口
- */
-export interface VideoToVideoParams {
-  model: string;
-  video_url: string;
-  style: number;
-  video_fps: number;
-}
-
-/**
- * 生成的图像数据
- */
-export interface GeneratedImage {
-  id: number;
-  src: string;
-}
-
-/**
- * 生成的视频数据
- */
-export interface GeneratedVideo {
-  id: number;
-  src: string;
-  taskId?: string;
-}
-
-/**
- * 视频生成API响应
- */
-export interface VideoGenerationResponse {
-  output: {
-    video_url: string;
-    task_id: string;
-  };
-}
-export interface VideoGenerationResponse2 {
-  output: {
-    output_video_url: string;
-    task_id: string;
-  };
-}
+// ==================== 类型导出 ====================
 
 // ==================== API响应类型 ====================
 
@@ -123,39 +50,6 @@ interface WanxImageEditResponse {
 export type ServiceResult<T = any> = ApiResult<T>;
 
 // ==================== 工具函数 ====================
-
-/**
- * 根据模型获取API端点URL
- */
-const getApiEndpoint = (model: string): string => {
-  const endpoints = {
-    'qwen-image':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation',
-    'wan2.2-t2i-flash':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis',
-    'wan2.2-t2i-plus':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis',
-    'wanx-style-repaint-v1':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/image-generation/generation',
-    'wanx2.1-t2v-turbo':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
-    'wanx2.1-t2v-plus':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
-    'wan2.2-t2v-plus':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
-    'wanx2.1-i2v-turbo':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
-    'wanx2.1-i2v-plus':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
-    'wan2.2-i2v-flash':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
-    'wan2.2-i2v-plus':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis',
-    'video-style-transform':
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis'
-  };
-  return endpoints[model as keyof typeof endpoints] || endpoints['qwen-image'];
-};
 
 /**
  * 构建文生图请求参数
@@ -297,7 +191,11 @@ class ApiService {
       }
 
       // 轮询任务状态
-      const pollResult = await pollTaskStatus(taskId);
+      const pollResult = await pollTaskStatus(
+        taskId,
+        APP_CONFIG.pollingMaxAttempts,
+        APP_CONFIG.pollingInterval
+      );
 
       if (!pollResult.success) {
         return pollResult;
@@ -368,7 +266,11 @@ class ApiService {
       }
 
       // 轮询任务状态
-      const pollResult = await pollTaskStatus(taskId);
+      const pollResult = await pollTaskStatus(
+        taskId,
+        APP_CONFIG.pollingMaxAttempts,
+        APP_CONFIG.pollingInterval
+      );
 
       if (!pollResult.success) {
         return {
@@ -435,7 +337,11 @@ class ApiService {
       }
 
       // 轮询任务状态
-      const pollResult = await pollTaskStatus(taskId);
+      const pollResult = await pollTaskStatus(
+        taskId,
+        APP_CONFIG.pollingMaxAttempts,
+        APP_CONFIG.pollingInterval
+      );
 
       if (!pollResult.success) {
         return {
@@ -501,7 +407,11 @@ class ApiService {
       }
 
       // 轮询任务状态
-      const pollResult = await pollTaskStatus(taskId, 100, 10000);
+      const pollResult = await pollTaskStatus(
+        taskId,
+        APP_CONFIG.pollingMaxAttempts,
+        APP_CONFIG.pollingIntervalLong
+      );
 
       if (!pollResult.success) {
         return {
@@ -564,8 +474,8 @@ export const generateVideoToVideo = (params: VideoToVideoParams) =>
  */
 export const pollTaskStatus = async (
   taskId: string,
-  maxAttempts: number = 100,
-  interval: number = 5000
+  maxAttempts: number = APP_CONFIG.pollingMaxAttempts,
+  interval: number = APP_CONFIG.pollingInterval
 ): Promise<ServiceResult<any>> => {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {

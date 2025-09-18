@@ -11,8 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { SelectMol, type SelectOption } from '@/components/mol/SelectMol';
 import { VideoPlayer } from '@/components/ui/video-player';
-import { generateVideo, type GeneratedVideo } from '@/lib/apiService';
-import { downloadCurrentVideo } from '@/lib/downloadUtils';
+import { generateVideo } from '@/lib/apiService';
+import type { GeneratedVideo } from '@/types/api';
+import { downloadCurrentVideo } from '@/utils/downloadUtils';
 import { useGenerateTimer } from '@/hooks/useGenerateTimer';
 
 /**

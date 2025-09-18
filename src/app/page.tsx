@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import Header from '@/components/Header';
 import { Type, ImageIcon, Sparkles, Wand2, Star, Video, Film } from 'lucide-react';
@@ -7,7 +9,7 @@ export default function Home() {
   return (
     <div className='bg-[#0D0D12] min-h-screen text-white'>
       <Header />
-      <main className='ml-0 sm:ml-20 pt-14'>
+      <main className='ml-0 sm:ml-20 pt-14 transition-all duration-300'>
         {/* Hero Section */}
         <div className='relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
           {/* Background decoration */}

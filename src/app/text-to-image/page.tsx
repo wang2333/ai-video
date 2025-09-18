@@ -1,20 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
-import { Sparkles, Info, RefreshCw, ChevronRight, AlertCircle, Download } from 'lucide-react';
+import { Sparkles, Info, AlertCircle, Download, RefreshCw, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { ImageCarouselMol } from '@/components/mol/imageCarouselMol';
+import ImageCarouselMol from '@/components/mol/imageCarouselMol';
 import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
-import { DialogMol } from '@/components/mol/dialogMol';
-import { downloadImageSmart } from '@/lib/downloadUtils';
-import { generateImage, GeneratedImage } from '@/lib/apiService';
+import { downloadImageSmart } from '@/utils/downloadUtils';
+import type { GeneratedImage } from '@/types/api';
 import { useGenerateTimer } from '@/hooks/useGenerateTimer';
+import { generateImage } from '@/lib/apiService';
+import { DialogMol } from '@/components/mol/dialogMol';
 
 const SIZE_MAP: Record<string, string> = {
   '1:1': '1328*1328', // 正方形

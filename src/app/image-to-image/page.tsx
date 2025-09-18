@@ -9,11 +9,12 @@ import Image from 'next/image';
 
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { ImageCarouselMol } from '@/components/mol/imageCarouselMol';
+import ImageCarouselMol from '@/components/mol/imageCarouselMol';
 import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { ImageUploadMol, UploadedImage } from '@/components/mol/imageUploadMol';
-import { downloadImageSmart } from '@/lib/downloadUtils';
-import { generateImageToImage, GeneratedImage } from '@/lib/apiService';
+import { downloadImageSmart } from '@/utils/downloadUtils';
+import { generateImageToImage } from '@/lib/apiService';
+import type { GeneratedImage } from '@/types/api';
 import { useGenerateTimer } from '@/hooks/useGenerateTimer';
 
 // Model data - 图生图支持的模型

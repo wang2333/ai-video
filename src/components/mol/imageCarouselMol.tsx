@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import {
@@ -28,7 +28,7 @@ export interface ImageCarouselProps {
  * @param className - 自定义样式类名
  * @param onCurrentChange - 当前图片切换时的回调函数，参数为当前图片的索引
  */
-export function ImageCarouselMol({ images, className, onCurrentChange }: ImageCarouselProps) {
+const ImageCarouselMol = ({ images, className, onCurrentChange }: ImageCarouselProps) => {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
@@ -107,4 +107,6 @@ export function ImageCarouselMol({ images, className, onCurrentChange }: ImageCa
       </Carousel>
     </div>
   );
-}
+};
+
+export default memo(ImageCarouselMol);

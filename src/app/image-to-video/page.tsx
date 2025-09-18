@@ -12,8 +12,9 @@ import { Button } from '@/components/ui/button';
 import { VideoPlayer } from '@/components/ui/video-player';
 import { SelectMol, SelectOption } from '@/components/mol/SelectMol';
 import { ImageUploadMol, UploadedImage } from '@/components/mol/imageUploadMol';
-import { downloadCurrentVideo } from '@/lib/downloadUtils';
-import { GeneratedVideo, generateImageToVideo } from '@/lib/apiService';
+import { downloadCurrentVideo } from '@/utils/downloadUtils';
+import { generateImageToVideo } from '@/lib/apiService';
+import type { GeneratedVideo } from '@/types/api';
 import { useGenerateTimer } from '@/hooks/useGenerateTimer';
 
 /**

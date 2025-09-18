@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'dashscope-result-*.oss-*.aliyuncs.com'
+        hostname: '*.aliyuncs.com'
       },
       {
         protocol: 'https',
