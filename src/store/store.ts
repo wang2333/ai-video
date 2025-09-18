@@ -63,62 +63,24 @@ const initialState: GlobalState = {
  */
 export const useGlobalStore = create<GlobalStore>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       ...initialState,
 
-      // 用户相关动作
-      setUser: user =>
-        set({
-          user,
-          isAuthenticated: !!user
-        }),
-
-      // 应用状态相关动作
+      // 动作
+      setUser: user => set({ user, isAuthenticated: !!user }),
       setLoading: loading => set({ isLoading: loading }),
-
-      setError: error =>
-        set({
-          error,
-          isLoading: false // 出错时停止加载
-        }),
-
+      setError: error => set({ error, isLoading: false }),
       clearError: () => set({ error: null }),
-
-      // UI状态相关动作
-      toggleSidebar: () =>
-        set(state => ({
-          sidebarOpen: !state.sidebarOpen
-        })),
-
+      toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebar: open => set({ sidebarOpen: open })
     }),
-    {
-      name: 'global-store'
-    }
+    { name: 'global-store' }
   )
 );
 
-/**
- * 便捷的选择器hooks (可选，用于性能优化)
- */
+// 简化的选择器hooks
 export const useUser = () => useGlobalStore(state => state.user);
 export const useIsAuthenticated = () => useGlobalStore(state => state.isAuthenticated);
 export const useIsLoading = () => useGlobalStore(state => state.isLoading);
 export const useError = () => useGlobalStore(state => state.error);
 export const useSidebarOpen = () => useGlobalStore(state => state.sidebarOpen);
-
-/**
- * 便捷的动作hooks (可选，用于更好的TypeScript支持)
- */
-export const useGlobalActions = () => {
-  const { setUser, setLoading, setError, clearError, toggleSidebar, setSidebar } = useGlobalStore();
-
-  return {
-    setUser,
-    setLoading,
-    setError,
-    clearError,
-    toggleSidebar,
-    setSidebar
-  };
-};

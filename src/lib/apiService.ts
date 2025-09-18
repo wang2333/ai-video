@@ -1,4 +1,3 @@
-import { baseApiClient, ApiResult } from './baseApiClient';
 import type {
   GenerateImageParams,
   GenerateImageToImageParams,
@@ -46,8 +45,46 @@ interface WanxImageEditResponse {
   };
 }
 
-// 重用 ApiResult 类型
+// 简化的API响应类型
+export interface ApiResult<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+// 重用简化的 ApiResult 类型
 export type ServiceResult<T = any> = ApiResult<T>;
+
+// ==================== 统一的HTTP客户端 ====================
+
+/**
+ * 简化的HTTP请求方法
+ */
+async function apiRequest<T = any>(url: string, options: RequestInit = {}): Promise<ApiResult<T>> {
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      ...options
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data?.error || data?.message || `请求失败: ${response.status}`
+      };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '网络请求失败'
+    };
+  }
+}
 
 // ==================== 工具函数 ====================
 
@@ -113,50 +150,48 @@ const processImageResponse = (data: any, model: string): GeneratedImage[] => {
   return [];
 };
 
-// ==================== API服务类 ====================
+// ==================== API服务函数 ====================
 
-class ApiService {
-  /**
-   * 生成图像API调用
-   * @param params 生成参数
-   * @returns Promise<ServiceResult<GeneratedImage[]>>
-   */
-  async generateImage(params: GenerateImageParams): Promise<ServiceResult<GeneratedImage[]>> {
-    try {
-      const apiUrl = getApiEndpoint(params.model);
-      const requestParams = buildImageGenerationParams(params);
+/**
+ * 生成图像API调用
+ */
+export async function generateImage(params: GenerateImageParams): Promise<ServiceResult<GeneratedImage[]>> {
+  try {
+    const apiUrl = getApiEndpoint(params.model);
+    const requestParams = buildImageGenerationParams(params);
 
-      const result = await baseApiClient.post('/api/proxy', {
+    const result = await apiRequest('/api/proxy', {
+      method: 'POST',
+      body: JSON.stringify({
         apiUrl,
         ...requestParams
-      });
+      })
+    });
 
-      if (!result.success) {
-        return result;
-      }
-
-      const images = processImageResponse(result.data, params.model);
-
-      return {
-        success: true,
-        data: images
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : '生成图像失败'
-      };
+    if (!result.success) {
+      return result;
     }
-  }
 
-  /**
-   * 图生图API调用
-   * @param params 生成参数
-   * @returns Promise<ServiceResult<GeneratedImage[]>>
-   */
-  async generateImageToImage(
-    params: GenerateImageToImageParams
-  ): Promise<ServiceResult<GeneratedImage[]>> {
+    const images = processImageResponse(result.data, params.model);
+
+    return {
+      success: true,
+      data: images
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '生成图像失败'
+    };
+  }
+}
+
+/**
+ * 图生图API调用
+ */
+export async function generateImageToImage(
+  params: GenerateImageToImageParams
+): Promise<ServiceResult<GeneratedImage[]>> {
     try {
       const apiUrl = getApiEndpoint(params.model);
       const requestParams = {
@@ -168,10 +203,13 @@ class ApiService {
       };
 
       // 创建异步任务
-      const taskResult = await baseApiClient.post('/api/proxy', {
-        apiUrl,
-        ...requestParams,
-        _isAsync: true
+      const taskResult = await apiRequest('/api/proxy', {
+        method: 'POST',
+        body: JSON.stringify({
+          apiUrl,
+          ...requestParams,
+          _isAsync: true
+        })
       });
 
       if (!taskResult.success) {
@@ -212,22 +250,20 @@ class ApiService {
         success: true,
         data: images
       };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : '图生图失败'
-      };
-    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '图生图失败'
+    };
   }
+}
 
-  /**
-   * 文生成视频API调用
-   * @param params 生成参数
-   * @returns Promise<ServiceResult<VideoGenerationResponse>>
-   */
-  async generateVideo(
-    params: GenerateVideoParams
-  ): Promise<ServiceResult<VideoGenerationResponse>> {
+/**
+ * 文生成视频API调用
+ */
+export async function generateVideo(
+  params: GenerateVideoParams
+): Promise<ServiceResult<VideoGenerationResponse>> {
     try {
       const apiUrl = getApiEndpoint(params.model);
       const requestParams = {
@@ -243,10 +279,13 @@ class ApiService {
       };
 
       // 创建异步任务
-      const taskResult = await baseApiClient.post('/api/proxy', {
-        apiUrl,
-        ...requestParams,
-        _isAsync: true
+      const taskResult = await apiRequest('/api/proxy', {
+        method: 'POST',
+        body: JSON.stringify({
+          apiUrl,
+          ...requestParams,
+          _isAsync: true
+        })
       });
 
       if (!taskResult.success) {
@@ -283,22 +322,20 @@ class ApiService {
         success: true,
         data: pollResult.data as VideoGenerationResponse
       };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : '生成视频失败'
-      };
-    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '生成视频失败'
+    };
   }
+}
 
-  /**
-   * 图生视频API调用
-   * @param params 生成参数
-   * @returns Promise<ServiceResult<VideoGenerationResponse>>
-   */
-  async generateImageToVideo(
-    params: ImageToVideoParams
-  ): Promise<ServiceResult<VideoGenerationResponse>> {
+/**
+ * 图生视频API调用
+ */
+export async function generateImageToVideo(
+  params: ImageToVideoParams
+): Promise<ServiceResult<VideoGenerationResponse>> {
     try {
       const apiUrl = getApiEndpoint(params.model);
       const requestParams = {
@@ -314,10 +351,13 @@ class ApiService {
       };
 
       // 创建异步任务
-      const taskResult = await baseApiClient.post('/api/proxy', {
-        apiUrl,
-        ...requestParams,
-        _isAsync: true
+      const taskResult = await apiRequest('/api/proxy', {
+        method: 'POST',
+        body: JSON.stringify({
+          apiUrl,
+          ...requestParams,
+          _isAsync: true
+        })
       });
 
       if (!taskResult.success) {
@@ -354,22 +394,20 @@ class ApiService {
         success: true,
         data: pollResult.data as VideoGenerationResponse
       };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : '图生视频失败'
-      };
-    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '图生视频失败'
+    };
   }
+}
 
-  /**
-   * 视频风格转换API调用
-   * @param params 转换参数
-   * @returns Promise<ServiceResult<VideoGenerationResponse>>
-   */
-  async generateVideoToVideo(
-    params: VideoToVideoParams
-  ): Promise<ServiceResult<VideoGenerationResponse2>> {
+/**
+ * 视频风格转换API调用
+ */
+export async function generateVideoToVideo(
+  params: VideoToVideoParams
+): Promise<ServiceResult<VideoGenerationResponse2>> {
     try {
       const apiUrl = getApiEndpoint(params.model);
       const requestParams = {
@@ -384,10 +422,13 @@ class ApiService {
       };
 
       // 创建异步任务
-      const taskResult = await baseApiClient.post('/api/proxy', {
-        apiUrl,
-        ...requestParams,
-        _isAsync: true
+      const taskResult = await apiRequest('/api/proxy', {
+        method: 'POST',
+        body: JSON.stringify({
+          apiUrl,
+          ...requestParams,
+          _isAsync: true
+        })
       });
 
       if (!taskResult.success) {
@@ -424,44 +465,13 @@ class ApiService {
         success: true,
         data: pollResult.data as VideoGenerationResponse2
       };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : '视频风格转换失败'
-      };
-    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '视频风格转换失败'
+    };
   }
 }
-
-export const apiService = new ApiService();
-
-/**
- * 生成图像的便捷方法
- */
-export const generateImage = (params: GenerateImageParams) => apiService.generateImage(params);
-
-/**
- * 图生图的便捷方法
- */
-export const generateImageToImage = (params: GenerateImageToImageParams) =>
-  apiService.generateImageToImage(params);
-
-/**
- * 生成视频的便捷方法
- */
-export const generateVideo = (params: GenerateVideoParams) => apiService.generateVideo(params);
-
-/**
- * 图生视频的便捷方法
- */
-export const generateImageToVideo = (params: ImageToVideoParams) =>
-  apiService.generateImageToVideo(params);
-
-/**
- * 视频风格转换的便捷方法
- */
-export const generateVideoToVideo = (params: VideoToVideoParams) =>
-  apiService.generateVideoToVideo(params);
 
 // ==================== 轮询工具函数 ====================
 
